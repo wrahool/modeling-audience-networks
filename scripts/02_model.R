@@ -122,7 +122,7 @@ get_simulated_network <- function(n1, n2, n3, n4, alpha, use_unique = TRUE) {
 
 n1 <- 500 # number of websites in the universe
 n2 <- 1000 # number of members of the audiences
-n3 <- 1000 # number of websites each person visits
+n3 <- 100 # number of websites each person visits
 n4 <- 5 # number ot types of websites / people
 
 # each person visits a total of n3 websites
@@ -133,30 +133,33 @@ n4 <- 5 # number ot types of websites / people
 
 set.seed(42)
 simulation_tbl <- NULL
-count <- 1
-for(alpha in seq(0.1, 0.5, by = 0.1)) {
-  message(alpha)
-  g_sl <- get_simulated_network(n1, n2, n3, n4, alpha, use_unique = TRUE)
-  g <- simplify(g_sl, remove.loops = TRUE)
-  
-  simulation_tbl <- tibble(alpha = alpha,
-         n_comm_sl = length(walktrap.community(g_sl)),
-         n_comm = length(walktrap.community(g))
-   ) %>% rbind(simulation_tbl)
-  
-  # if(count %% 10 == 0) {
-  #   write_csv(simulation_tbl, paste0("data/simulation_results", count, ".csv"))
-  #   simulation_tbl <- NULL
-  # }
-  count <- count + 1
+
+for(i in 1:50) {
+  count <- 1
+  for(alpha in seq(0.5, 1, by = 0.01)) {
+    message(alpha)
+    g_sl <- get_simulated_network(n1, n2, n3, n4, alpha, use_unique = TRUE)
+    g <- simplify(g_sl, remove.loops = TRUE)
+    
+    simulation_tbl <- tibble(alpha = alpha,
+           n_comm_sl = length(walktrap.community(g_sl)),
+           n_comm = length(walktrap.community(g))
+     ) %>% rbind(simulation_tbl)
+    
+    if(count %% 10 == 0) {
+      write_csv(simulation_tbl, paste0("data/", i, "_master_simulation_results", count, ".csv"))
+      simulation_tbl <- NULL
+    }
+    count <- count + 1
+  }
 }
 
 # write_csv(simulation_tbl, "data/simulation_results5to8.csv")
 
-temp <- simulation_tbl %>%
-  filter(!n_comm  %in% c(500),
-         !n_comm_sl %in% c(500))
-
-ggplot(simulation_tbl) +
-  geom_line(aes(x=alpha, y=n_comm_sl), color = "red") +
-  geom_line(aes(x=alpha, y=n_comm), color = "blue")
+# temp <- simulation_tbl %>%
+#   filter(!n_comm  %in% c(500),
+#          !n_comm_sl %in% c(500))
+# 
+# ggplot(simulation_tbl) +
+#   geom_line(aes(x=alpha, y=n_comm_sl), color = "red") +
+#   geom_line(aes(x=alpha, y=n_comm), color = "blue")
