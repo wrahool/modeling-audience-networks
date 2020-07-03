@@ -106,15 +106,6 @@ get_simulated_network <- function(n1, n2, n3, n4, alpha) {
       pull(uv)
   }
   
-  # V(outlet_projection)$type <- unlist(
-  #                                 lapply(V(outlet_projection)$name,
-  #                                   FUN = function(x) { 
-  #                                     outlets_tbl %>%
-  #                                       filter(outlet_name == x) %>% 
-  #                                       pull(outlet_type)
-  #                                     }
-  #                                   )
-  #                               )
   
   V(outlet_projection)$type <- V(outlet_projection)$name %>%
     lapply(FUN = function(x) { 
@@ -183,50 +174,123 @@ run_simulation <- function(n1, n2, n3, n4, alpha, N) {
     g_sl <- test[[2]]
     o_tbl <- test[[3]]
     
-    c_wt <- cluster_walktrap(g)
-    c_wt2 <- cluster_walktrap(g_sl)
+    c_wt <- tryCatch(
+      cluster_walktrap(g),
+      error = function(e) {
+        return(NA)
+      })
     
-    c_l <- cluster_louvain(g)
-    c_l2 <- cluster_louvain(g_sl)
+    c_wt2 <- tryCatch(
+      cluster_walktrap(g_sl),
+      error = function(e) {
+        return(NA)
+      })
     
-    c_fg <- cluster_fast_greedy(g)
-    c_fg2 <- cluster_fast_greedy(g_sl)
+    c_l <- tryCatch(
+      cluster_louvain(g),
+      error = function(e) {
+        return(NA)
+      })
     
-    # c_eb <- cluster_edge_betweenness(g)
-    # c_eb2 <- cluster_edge_betweenness(g_sl)
+    c_l2 <- tryCatch(
+      cluster_louvain(g_sl),
+      error = function(e) {
+        return(NA)
+      })
     
-    c_im <- cluster_infomap(g)
-    c_im2 <- cluster_infomap(g_sl)
+    c_fg <- tryCatch(
+      cluster_fast_greedy(g),
+      error = function(e) {
+        return(NA)
+      })
     
-    c_lp <- cluster_label_prop(g)
-    c_lp2 <- cluster_label_prop(g_sl)
+    c_fg2 <- tryCatch(
+      cluster_fast_greedy(g_sl),
+      error = function(e) {
+        return(NA)
+      })
     
-    c_le <- cluster_leading_eigen(g)
-    c_le2 <- cluster_leading_eigen(g_sl)
+    c_eb <- tryCatch(
+      cluster_edge_betweenness(g),
+      error = function(e) {
+        return(NA)
+      })
     
-    # c_sl <- cluster_spinglass(g)
-    # c_sl2 <- cluster_spinglass(g_sl)
+    c_eb2 <- tryCatch(
+      cluster_edge_betweenness(g_sl),
+      error = function(e) {
+        return(NA)
+      })
     
+    c_im <- tryCatch(
+      cluster_infomap(g),
+      error = function(e) {
+        return(NA)
+      })
+    
+    c_im2 <- tryCatch(
+      cluster_infomap(g_sl),
+      error = function(e) {
+        return(NA)
+      })
+    
+    c_lp <- tryCatch(
+      cluster_label_prop(g),
+      error = function(e) {
+        return(NA)
+      })
+    
+    c_lp2 <- tryCatch(
+      cluster_label_prop(g_sl),
+      error = function(e) {
+        return(NA)
+      })
+    
+    c_le <- tryCatch(
+      cluster_leading_eigen(g),
+      error = function(e) {
+        return(NA)
+      })
+    
+    c_le2 <- tryCatch(
+      cluster_leading_eigen(g_sl),
+      error = function(e) {
+        return(NA)
+      })
+    
+    c_sl <- tryCatch(
+      cluster_spinglass(g),
+      error = function(e) {
+        return(NA)
+      })
+    
+    c_sl2 <- tryCatch(
+      cluster_spinglass(g_sl),
+      error = function(e) {
+        return(NA)
+      }
+      )
+      
     # c_o <- cluster_optimal(g)
     # c_o2 <- cluster_optimal(g_sl)
     
     all_cs <- list(c_wt, c_wt2,
                    c_l, c_l2,
                    c_fg, c_fg2,
-                   # c_eb, c_eb2,
+                   c_eb, c_eb2,
                    c_im, c_im2,
-                   c_lp, c_lp2
-                   # c_sl, c_sl2)
+                   c_lp, c_lp2,
+                   c_sl, c_sl2
     )
     
     cd_used <- c(
       "wt", "wt2",
       "l", "l2",
       "fg", "fg2",
-      # "eb", "eb2",
+      "eb", "eb2",
       "im", "im2",
-      "lp", "lp2"
-      # "sl", "sl2"
+      "lp", "lp2",
+      "sl", "sl2"
     )
     
     res <- sapply(all_cs, FUN = function(x) {
@@ -255,7 +319,7 @@ run_simulation <- function(n1, n2, n3, n4, alpha, N) {
 
 set.seed(42)
 simulation_results <- NULL
-for(a in seq(from = 0, to = 1, by = 0.1)) {
+for(a in seq(from = 0, to = 0, by = 0.1)) {
   simulation_results <- run_simulation(n1 = 50, n2 = 100, n4 = 5, alpha = a, N = 100) %>%
     rbind(simulation_results)
 }
