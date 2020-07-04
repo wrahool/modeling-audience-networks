@@ -321,12 +321,19 @@ run_simulation <- function(n1, n2, n3, n4, alpha, N) {
 
 set.seed(42)
 simulation_results <- NULL
-for(a in seq(from = 0.6, to = 0.6, by = 0.1)) {
+for(a in seq(from = 0, to = 1, by = 0.1)) {
   simulation_results <- run_simulation(n1 = 50, n2 = 100, n4 = 5, alpha = a, N = 100) %>%
     rbind(simulation_results)
 }
 
 
+# ggplot(simulation_results) +
+#   geom_boxplot(aes(x=method, y=accuracies)) +
+#   theme_bw()
+
+
 ggplot(simulation_results) +
-  geom_boxplot(aes(x=method, y=accuracies)) +
+  geom_line(aes(x=alpha, y=accuracies)) +
+  facet_wrap(~method) +
   theme_bw()
+

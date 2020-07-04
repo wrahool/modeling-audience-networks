@@ -319,7 +319,7 @@ run_simulation <- function(n1, n2, n3, n4, alpha, N) {
 
 set.seed(42)
 simulation_results <- NULL
-for(a in seq(from = 0, to = 0, by = 0.1)) {
+for(a in seq(from = 0.7, to = 0.7, by = 0.1)) {
   simulation_results <- run_simulation(n1 = 50, n2 = 100, n4 = 5, alpha = a, N = 100) %>%
     rbind(simulation_results)
 }
