@@ -86,8 +86,6 @@ get_simulated_network <- function(n1, n2, n3, n4, alpha) {
       )
   }
   
-  # hello
-  
   outlet_reach <- audience_el %>%
     pull(outlet_name) %>%
     table() %>%
