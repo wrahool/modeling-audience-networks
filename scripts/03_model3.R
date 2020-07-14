@@ -1,6 +1,8 @@
 library(tidyverse)
 library(igraph)
 
+# to plot results, scroll to the very bottom
+
 ##################################################
 # model paramters
 
@@ -328,6 +330,9 @@ for(a in seq(from = 0.6, to = 0.6, by = 0.1)) {
 
 write_csv(simulation_results, "data/simulation_results_100_per_alpha_0_to_1.csv")
 
+######################################################
+# plotting results
+
 simulation_results = read_csv("data/simulation_results_100_per_alpha_0_to_1.csv")
 
 # ggplot(simulation_results) +
@@ -337,7 +342,10 @@ simulation_results = read_csv("data/simulation_results_100_per_alpha_0_to_1.csv"
 ggplot(simulation_results) +
   geom_boxplot(aes(x=as_factor(alpha), y=accuracies)) +
   facet_wrap(.~method, nrow = 7, ncol = 2) +
+  xlab("alpha") +
   theme_bw()
+
+ggsave("plots/simulation_results_100_per_alpha_0_to_1.pdf")
 
 simulation_results_bkup <- simulation_results %>%
   filter(!method %in% c("sl", "sl2"))
