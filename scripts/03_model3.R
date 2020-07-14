@@ -326,7 +326,14 @@ for(a in seq(from = 0.6, to = 0.6, by = 0.1)) {
     rbind(simulation_results)
 }
 
+write_csv(simulation_results, "data/simulation_results_100_per_alpha_0_to_1.csv")
+
 
 ggplot(simulation_results) +
   geom_boxplot(aes(x=method, y=accuracies)) +
+  theme_bw()
+
+ggplot(simulation_results) +
+  geom_boxplot(aes(x=as_factor(alpha), y=accuracies)) +
+  facet_wrap(.~method, nrow = 2) +
   theme_bw()
