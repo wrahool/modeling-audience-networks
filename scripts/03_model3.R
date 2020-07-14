@@ -319,16 +319,19 @@ run_simulation <- function(n1, n2, n3, n4, alpha, N) {
 # n3 = number of websites each person visits
 # n4 = number of types of websites / people
 
+# n_simulations, N = the number of simulations
+
 # alpha <- 0.8
 
 set.seed(42)
+n_simulations = 1000
 simulation_results <- NULL
 for(a in seq(from = 0.6, to = 0.6, by = 0.1)) {
-  simulation_results <- run_simulation(n1 = 50, n2 = 100, n4 = 5, alpha = a, N = 100) %>%
+  simulation_results <- run_simulation(n1 = 50, n2 = 100, n4 = 5, alpha = a, n_simulations = 1000) %>%
     rbind(simulation_results)
 }
 
-write_csv(simulation_results, "data/simulation_results_100_per_alpha_0_to_1.csv")
+write_csv(simulation_results, paste0("data/simulation_results_", n_simulations, "_per_alpha_0_to_1.csv"))
 
 ######################################################
 # plotting results
