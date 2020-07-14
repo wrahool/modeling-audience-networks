@@ -171,7 +171,7 @@ get_prediction_accuracy <- function(c, outlet_types) {
 run_simulation <- function(n1, n2, n3, n4, alpha, N) {
   res_tbl <- NULL
   for(i in 1:N) {
-    message(paste0("Run ", i))
+    message(paste0("alpha : ", alpha, " Run : ", i))
     test <- get_simulated_network(n1, n2, n3, n4, alpha)
     
     g <- test[[1]]
@@ -326,8 +326,8 @@ run_simulation <- function(n1, n2, n3, n4, alpha, N) {
 set.seed(42)
 n_simulations = 1000
 simulation_results <- NULL
-for(a in seq(from = 0.6, to = 0.6, by = 0.1)) {
-  simulation_results <- run_simulation(n1 = 50, n2 = 100, n4 = 5, alpha = a, n_simulations = 1000) %>%
+for(a in seq(from = 0, to = 1, by = 0.1)) {
+  simulation_results <- run_simulation(n1 = 50, n2 = 100, n4 = 5, alpha = a, N= n_simulations) %>%
     rbind(simulation_results)
 }
 
