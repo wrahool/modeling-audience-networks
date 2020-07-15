@@ -334,31 +334,3 @@ for(a in seq(from = from_alpha, to = to_alpha, by = 0.1)) {
 }
 
 # write_csv(simulation_results, paste0("data/simulation_results_", n_simulations, "_per_alpha_0_to_1.csv"))
-
-######################################################
-# plotting results
-
-simulation_results = read_csv("data/simulation_results_100_per_alpha_0_to_1.csv")
-
-# ggplot(simulation_results) +
-#   geom_boxplot(aes(x=method, y=accuracies)) +
-#   theme_bw()
-
-ggplot(simulation_results) +
-  geom_boxplot(aes(x=as_factor(alpha), y=accuracies)) +
-  facet_wrap(.~method, nrow = 7, ncol = 2) +
-  xlab("alpha") +
-  theme_bw()
-
-ggsave("plots/simulation_results_100_per_alpha_0_to_1.pdf")
-
-simulation_results_bkup <- simulation_results %>%
-  filter(!method %in% c("sl", "sl2"))
-
-ggplot(simulation_results_bkup) +
-  geom_boxplot(aes(x=as_factor(alpha), y=accuracies)) +
-  facet_wrap(.~method, nrow = 7, ncol = 2) +
-  theme_bw()
-
-# next steps:
-# investigate  how eb2 and lp2 give 100% accuracy even when alpha = 1
