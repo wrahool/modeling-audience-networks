@@ -45,6 +45,7 @@ for(file in reqd_files) {
 ggplot(sim_results) +
   geom_boxplot(aes(x=as_factor(alpha), y=accuracies)) +
   facet_wrap(.~method, nrow = 7, ncol = 2) +
+  xlab("alpha") +
   theme_bw()
 
 ggsave("plots/simulation_results_1000_per_alpha_0_to_1.pdf")
