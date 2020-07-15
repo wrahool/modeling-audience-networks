@@ -325,13 +325,15 @@ run_simulation <- function(n1, n2, n3, n4, alpha, N) {
 
 set.seed(42)
 n_simulations = 1000
-simulation_results <- NULL
-for(a in seq(from = 0, to = 1, by = 0.1)) {
-  simulation_results <- run_simulation(n1 = 50, n2 = 100, n4 = 5, alpha = a, N= n_simulations) %>%
-    rbind(simulation_results)
+# simulation_results <- NULL
+from_alpha = 0.7
+to_alpha = 1
+for(a in seq(from = from_alpha, to = to_alpha, by = 0.1)) {
+  simulation_results <- run_simulation(n1 = 50, n2 = 100, n4 = 5, alpha = a, N= n_simulations)
+    write_csv(simulation_results, paste0("data/N_", n_simulations, "_alpha_", a, ".csv"))
 }
 
-write_csv(simulation_results, paste0("data/simulation_results_", n_simulations, "_per_alpha_0_to_1.csv"))
+# write_csv(simulation_results, paste0("data/simulation_results_", n_simulations, "_per_alpha_0_to_1.csv"))
 
 ######################################################
 # plotting results
