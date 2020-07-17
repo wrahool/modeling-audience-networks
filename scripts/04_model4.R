@@ -1,14 +1,17 @@
 library(tidyverse)
 library(igraph)
+library(aricode)
 
-##################################################
+# the only difference between model 3 and model 4 is the calculation of prediction accuracy
+# instead of doing a naive accuracy calculation, in this I'm using
+# NMI or the Normalized Mutual Information
+
+################################################################
 # model paramters
 
 # n1: number of websites in the universe
 # n2: number of members of the audiences
-# n3: number of websites each person visits. If ommitted, then chooses a random even number
-#   between 2 and n1
-# n4: number ot types of websites / people
+# n4: number of types of websites / people
 
 # alpha:
 # each person visits a total of n3 websites
@@ -17,20 +20,21 @@ library(igraph)
 # when alpha is 1 they can visit any website
 # when alpha is 0.5, half of the websites they visit can be any website, the other half have to be restricted to those whose outlet_id == p_id
 
-##################################################
+################################################################
 
 get_simulated_network <- function(n1, n2, n3, n4, alpha) {
   
+  # this model no longer uses n3. Instead each person visits a different number of websites
   # if n3 is missing choose a random number from 2 to half the number of outlets in the universe
-  if(missing(n3)) {
-    n3 <- sample(seq(from = 2,
-                     to = ifelse((n1/2)%%2 == 0,
-                                 n1/2,
-                                 (n1/2)-1),
-                     by = 2),
-                 1)
-  }
-
+  # if(missing(n3)) {
+  #   n3 <- sample(seq(from = 2,
+  #                    to = ifelse((n1/2)%%2 == 0,
+  #                                n1/2,
+  #                                (n1/2)-1),
+  #                    by = 2),
+  #                1)
+  # }
+  
   outlet_ids <- 1:n1
   p_ids <- 1:n2
   types <- LETTERS[1:n4]
@@ -53,6 +57,9 @@ get_simulated_network <- function(n1, n2, n3, n4, alpha) {
   
   # loop over each person
   for(p in 1:n2) {
+    
+    n3 <- sample(1:n1, 1)
+    
     # when alpha is 0 all of their choices are selective
     # when alpha is 1 all of their choices are random
     random_choices_allowed <- round(alpha * n3)
@@ -95,17 +102,7 @@ get_simulated_network <- function(n1, n2, n3, n4, alpha) {
   V(audience_g)$type <- substr(V(audience_g)$name, 1, 1) == "O"
   
   projection_graphs <- bipartite_projection(audience_g, multiplicity = TRUE)
-  
   outlet_projection <- projection_graphs$proj2
-  
-  outlet_projection_sl <- outlet_projection
-  outlet_projection_sl[from=V(outlet_projection_sl), to=V(outlet_projection_sl)] = 1
-  for(v in V(outlet_projection_sl)$name) {
-    E(outlet_projection_sl)[v %--% v]$weight <- outlet_reach %>% 
-      filter(outlet_name == v) %>%
-      pull(uv)
-  }
-  
   
   V(outlet_projection)$type <- V(outlet_projection)$name %>%
     lapply(FUN = function(x) { 
@@ -123,21 +120,29 @@ get_simulated_network <- function(n1, n2, n3, n4, alpha) {
                                                      ifelse(V(outlet_projection)$type == "D", "olivedrab4",
                                                             "cyan"))))
   
-
-
+  outlet_projection_sl <- outlet_projection
+  outlet_projection_sl[from=V(outlet_projection_sl), to=V(outlet_projection_sl)] = 1
+  for(v in V(outlet_projection_sl)$name) {
+    E(outlet_projection_sl)[v %--% v]$weight <- outlet_reach %>% 
+      filter(outlet_name == v) %>%
+      pull(uv)
+  }
+  
   return(list(outlet_projection, outlet_projection_sl, outlets_tbl))
 }
 
+################################################################
 # function to calculate mode
-# Create the function.
 mode <- function(v) {
   uniqv <- unique(v)
   uniqv[which.max(tabulate(match(v, uniqv)))]
 }
 
+################################################################
+# 
 # assign, to outlets in each cluster, the modal type as its predicted type
 get_prediction_accuracy <- function(c, outlet_types) {
-
+  
   pred_tbl <- NULL
   for(i in 1:length(c)) {
     
@@ -164,15 +169,37 @@ get_prediction_accuracy <- function(c, outlet_types) {
   
 }
 
+# function to calculate the NMI for community structure c
+get_NMI <- function(c, outlet_types) {
+  
+  if(!is.na(c)) {
+    confusion_tbl <- outlet_types %>%
+      merge(tibble(
+        outlet_name = c$names,
+        pred_type = c$membership
+      ))
+    
+    NMI_score <- NMI(confusion_tbl$outlet_type,
+                     confusion_tbl$pred_type)
+  } else
+    NMI_score <- NA
+  
+  return(NMI_score)
+    
+}
+
 run_simulation <- function(n1, n2, n3, n4, alpha, N) {
   res_tbl <- NULL
+  all_o_ds <- NULL
   for(i in 1:N) {
-    message(paste0("Run ", i))
+    message(paste0("alpha : ", alpha, " Run : ", i))
     test <- get_simulated_network(n1, n2, n3, n4, alpha)
     
     g <- test[[1]]
     g_sl <- test[[2]]
     o_tbl <- test[[3]]
+    
+    # save(g_sl, file = paste0("simulated_network_data_100/alpha_", alpha, "/", n1, "_", n2, "_", i, ".RData"))
     
     c_wt <- tryCatch(
       cluster_walktrap(g),
@@ -268,20 +295,9 @@ run_simulation <- function(n1, n2, n3, n4, alpha, N) {
       cluster_spinglass(g_sl),
       error = function(e) {
         return(NA)
-      })
+      }
+    )
     
-    c_le <- tryCatch(
-      cluster_leading_eigen(g),
-      error = function(e) {
-        return(NA)
-      })
-    
-    c_le2 <- tryCatch(
-      cluster_leading_eigen(g_sl),
-      error = function(e) {
-        return(NA)
-      })
-      
     # c_o <- cluster_optimal(g)
     # c_o2 <- cluster_optimal(g_sl)
     
@@ -291,8 +307,8 @@ run_simulation <- function(n1, n2, n3, n4, alpha, N) {
                    c_eb, c_eb2,
                    c_im, c_im2,
                    c_lp, c_lp2,
-                   c_sl, c_sl2,
-                   c_le, c_le2
+                   c_le, c_le2,
+                   c_sl, c_sl2
     )
     
     cd_used <- c(
@@ -302,19 +318,19 @@ run_simulation <- function(n1, n2, n3, n4, alpha, N) {
       "eb", "eb2",
       "im", "im2",
       "lp", "lp2",
-      "sl", "sl2",
-      "le", "le2"
+      "le", "le2",
+      "sl", "sl2"
     )
     
-    res <- sapply(all_cs, FUN = function(x) {
-      get_prediction_accuracy(x, o_tbl)
+    NMI_scores <- sapply(all_cs, FUN = function(x) {
+      get_NMI(x, o_tbl)
     })
     
     res_tbl <- tibble(
       run = i,
       alpha = alpha,
       method = cd_used,
-      accuracies = res
+      NMI_scores = NMI_scores
     ) %>%
       rbind(res_tbl)
   }
@@ -328,16 +344,13 @@ run_simulation <- function(n1, n2, n3, n4, alpha, N) {
 # n3 = number of websites each person visits
 # n4 = number of types of websites / people
 
-# alpha <- 0.8
+# n_simulations, N = the number of simulations
 
-set.seed(42)
-simulation_results <- NULL
-for(a in seq(from = 0.7, to = 0.7, by = 0.1)) {
-  simulation_results <- run_simulation(n1 = 50, n2 = 100, n4 = 5, alpha = a, N = 100) %>%
-    rbind(simulation_results)
+n_simulations = 100
+from_alpha = 0
+to_alpha = 1
+for(a in seq(from = from_alpha, to = to_alpha, by = 0.1)) {
+  set.seed(1009)
+  simulation_results <- run_simulation(n1 = 50, n2 = 100, n4 = 5, alpha = a, N=n_simulations)
+  write_csv(simulation_results, paste0("data/CLOUD_NMI_N_", n_simulations, "_alpha_", a, ".csv"))
 }
-
-
-ggplot(simulation_results) +
-  geom_boxplot(aes(x=method, y=accuracies)) +
-  theme_bw()

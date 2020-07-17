@@ -1,8 +1,6 @@
 library(tidyverse)
 library(igraph)
 
-# to plot results, scroll to the very bottom
-
 ################################################################
 # model paramters
 
