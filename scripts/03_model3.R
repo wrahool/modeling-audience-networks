@@ -99,17 +99,7 @@ get_simulated_network <- function(n1, n2, n3, n4, alpha) {
   V(audience_g)$type <- substr(V(audience_g)$name, 1, 1) == "O"
   
   projection_graphs <- bipartite_projection(audience_g, multiplicity = TRUE)
-  
   outlet_projection <- projection_graphs$proj2
-  
-  outlet_projection_sl <- outlet_projection
-  outlet_projection_sl[from=V(outlet_projection_sl), to=V(outlet_projection_sl)] = 1
-  for(v in V(outlet_projection_sl)$name) {
-    E(outlet_projection_sl)[v %--% v]$weight <- outlet_reach %>% 
-      filter(outlet_name == v) %>%
-      pull(uv)
-  }
-  
   
   V(outlet_projection)$type <- V(outlet_projection)$name %>%
     lapply(FUN = function(x) { 
@@ -127,7 +117,13 @@ get_simulated_network <- function(n1, n2, n3, n4, alpha) {
                                                      ifelse(V(outlet_projection)$type == "D", "olivedrab4",
                                                             "cyan"))))
   
-  
+  outlet_projection_sl <- outlet_projection
+  outlet_projection_sl[from=V(outlet_projection_sl), to=V(outlet_projection_sl)] = 1
+  for(v in V(outlet_projection_sl)$name) {
+    E(outlet_projection_sl)[v %--% v]$weight <- outlet_reach %>% 
+      filter(outlet_name == v) %>%
+      pull(uv)
+  }
   
   return(list(outlet_projection, outlet_projection_sl, outlets_tbl))
 }
@@ -170,6 +166,7 @@ get_prediction_accuracy <- function(c, outlet_types) {
 
 run_simulation <- function(n1, n2, n3, n4, alpha, N) {
   res_tbl <- NULL
+  all_o_ds <- NULL
   for(i in 1:N) {
     message(paste0("alpha : ", alpha, " Run : ", i))
     test <- get_simulated_network(n1, n2, n3, n4, alpha)
@@ -177,6 +174,8 @@ run_simulation <- function(n1, n2, n3, n4, alpha, N) {
     g <- test[[1]]
     g_sl <- test[[2]]
     o_tbl <- test[[3]]
+    
+    save(g_sl, file = paste0("simulated_network_data/alpha_", alpha, "/", n1, "_", n2, "_", i, ".RData"))
     
     c_wt <- tryCatch(
       cluster_walktrap(g),
@@ -323,14 +322,14 @@ run_simulation <- function(n1, n2, n3, n4, alpha, N) {
 
 # alpha <- 0.8
 
-set.seed(42)
 n_simulations = 1000
 # simulation_results <- NULL
-from_alpha = 0.7
-to_alpha = 1
+from_alpha = 0
+to_alpha = 0
 for(a in seq(from = from_alpha, to = to_alpha, by = 0.1)) {
-  simulation_results <- run_simulation(n1 = 50, n2 = 100, n4 = 5, alpha = a, N= n_simulations)
-    write_csv(simulation_results, paste0("data/N_", n_simulations, "_alpha_", a, ".csv"))
+  set.seed(1009)
+  simulation_results <- run_simulation(n1 = 50, n2 = 100, n4 = 5, alpha = a, N=n_simulations)
+  write_csv(simulation_results, paste0("data/CLOUD_N_", n_simulations, "_alpha_", a, ".csv"))
 }
 
 # write_csv(simulation_results, paste0("data/simulation_results_", n_simulations, "_per_alpha_0_to_1.csv"))
