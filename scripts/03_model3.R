@@ -3,7 +3,7 @@ library(igraph)
 
 # to plot results, scroll to the very bottom
 
-##################################################
+################################################################
 # model paramters
 
 # n1: number of websites in the universe
@@ -17,7 +17,7 @@ library(igraph)
 # when alpha is 1 they can visit any website
 # when alpha is 0.5, half of the websites they visit can be any website, the other half have to be restricted to those whose outlet_id == p_id
 
-##################################################
+################################################################
 
 get_simulated_network <- function(n1, n2, n3, n4, alpha) {
   
@@ -128,13 +128,14 @@ get_simulated_network <- function(n1, n2, n3, n4, alpha) {
   return(list(outlet_projection, outlet_projection_sl, outlets_tbl))
 }
 
+################################################################
 # function to calculate mode
-# Create the function.
 mode <- function(v) {
   uniqv <- unique(v)
   uniqv[which.max(tabulate(match(v, uniqv)))]
 }
 
+################################################################
 # assign, to outlets in each cluster, the modal type as its predicted type
 get_prediction_accuracy <- function(c, outlet_types) {
   
@@ -175,7 +176,7 @@ run_simulation <- function(n1, n2, n3, n4, alpha, N) {
     g_sl <- test[[2]]
     o_tbl <- test[[3]]
     
-    save(g_sl, file = paste0("simulated_network_data/alpha_", alpha, "/", n1, "_", n2, "_", i, ".RData"))
+    # save(g_sl, file = paste0("simulated_network_data_100/alpha_", alpha, "/", n1, "_", n2, "_", i, ".RData"))
     
     c_wt <- tryCatch(
       cluster_walktrap(g),
@@ -296,7 +297,16 @@ run_simulation <- function(n1, n2, n3, n4, alpha, N) {
       "sl", "sl2"
     )
     
-    res <- sapply(all_cs, FUN = function(x) {
+    # get count of the number of communities
+    comm_count <- sapply(all_cs, FUN = function(x) {
+      if(is.na(unlist(x)))
+        NaN                 # this is to prevent count being 1 when community detection gives NA
+      else
+        length(x)
+    })
+    
+    # get prediction accuracy
+    acc <- sapply(all_cs, FUN = function(x) {
       get_prediction_accuracy(x, o_tbl)
     })
     
@@ -304,7 +314,8 @@ run_simulation <- function(n1, n2, n3, n4, alpha, N) {
       run = i,
       alpha = alpha,
       method = cd_used,
-      accuracies = res
+      accuracies = acc,
+      c_count = comm_count
     ) %>%
       rbind(res_tbl)
   }
@@ -322,10 +333,10 @@ run_simulation <- function(n1, n2, n3, n4, alpha, N) {
 
 # alpha <- 0.8
 
-n_simulations = 1000
+n_simulations = 100
 # simulation_results <- NULL
 from_alpha = 0
-to_alpha = 0
+to_alpha = 1
 for(a in seq(from = from_alpha, to = to_alpha, by = 0.1)) {
   set.seed(1009)
   simulation_results <- run_simulation(n1 = 50, n2 = 100, n4 = 5, alpha = a, N=n_simulations)
