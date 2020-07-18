@@ -380,8 +380,8 @@ run_simulation <- function(n1, n2, n3, n4, pl_exp, rho, N) {
 # n_simulations, N = the number of simulations
 
 n_simulations = 100
-from_rho = 0.4
-to_rho = 0.4
+from_rho = 0
+to_rho = 1
 a = 1.5
 for(r in seq(from = from_rho, to = to_rho, by = 0.1)) {
   set.seed(1009)
