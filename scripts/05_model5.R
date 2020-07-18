@@ -3,12 +3,17 @@ library(igraph)
 library(aricode)
 library(poweRlaw)
 
+# model 5
+
 # the only difference between model 3 and model 4 is the calculation of prediction accuracy
 # instead of doing a naive accuracy calculation, in this I'm using
 # NMI or the Normalized Mutual Information
 
+# in model 5, there's a new parameter: the exponent of the power law
+# outlets' repute follow a power law and audience's choices depends on the outlet's reputation
+
 ################################################################
-# model paramters
+# model parameters
 
 # n1: number of websites in the universe
 # n2: number of members of the audiences
@@ -351,7 +356,7 @@ run_simulation <- function(n1, n2, n3, n4, pl_exp, rho, N) {
 
 # n_simulations, N = the number of simulations
 
-n_simulations = 1
+n_simulations = 100
 from_rho = 0
 to_rho = 1
 a = 1.5
