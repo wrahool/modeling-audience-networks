@@ -62,8 +62,20 @@ ggplot(sim_results_bkup) +
 
 #################################################################
 
-# plotting accuracy + overfitting for 100 simulations per alpha
-# instead of boxplot
+# plotting NMI
+reqd_files_indices <- list.files("data/") %>%
+  grep(pattern = "CLOUD_NMI_N_100")
 
+reqd_files <- list.files("data/")[reqd_files_indices]
 
+NMI_results <- NULL
+for(file in reqd_files) {
+  NMI_result <- read_csv(paste0("data/", file))
+  NMI_results <- NMI_result %>%
+    rbind(NMI_results)
+}
 
+ggplot(NMI_results) +
+  geom_boxplot(aes(x=as_factor(alpha), y=NMI_scores)) +
+  facet_wrap(.~method, nrow = 8, ncol = 2) +
+  theme_bw()
