@@ -28,7 +28,25 @@ library(poweRlaw)
 
 ################################################################
 
-get_simulated_network <- function(n1, n2, n3, n4, a, rho) {
+sample_atleast_once <- function(x, n){
+  
+  # Only consider unique items
+  if(length(unique(x)) > n){
+    stop("Not enough unique items in input to give at least one of each")
+  }
+  
+  # Get values for vector - force each item in at least once
+  # then randomly select values to get the remaining.
+  vals <- c(unique(x),
+            sample(unique(x), n - length(unique(x)), 
+                   replace = TRUE))
+  
+  # Now shuffle them
+  sample(vals)
+}
+
+
+get_simulated_network <- function(n1, n2, n3, n4, a, rho, stop_debug = FALSE) {
   
   outlet_ids <- 1:n1
   p_ids <- 1:n2
@@ -40,14 +58,14 @@ get_simulated_network <- function(n1, n2, n3, n4, a, rho) {
   outlets_tbl <- tibble(
     outlet_id = outlet_ids,
     outlet_name = paste("O", outlet_ids, sep = "_"),
-    outlet_type = sample(types, size = n1, replace = TRUE),
+    outlet_type = sample_atleast_once(types, n1), # at least one website of each type
     outlet_repute = outlet_rep_normalized
   )
   
   audience_tbl <- tibble(
     p_id = p_ids,
     p_name = paste("P", p_ids, sep = ""),
-    p_type = sample(types, size = n2, replace = TRUE)
+    p_type = sample_atleast_once(types, n2)       # at least one audience member of each type
   )
   
   audience_el <- NULL
@@ -74,12 +92,12 @@ get_simulated_network <- function(n1, n2, n3, n4, a, rho) {
       selective_outlets_pool <- selective_outlets_pool %>%
         rbind(selective_outlets_pool)
     }
-      
+    
     selective_chosen_outlets <- selective_outlets_pool %>%          # from
       pull(outlet_id) %>%                                           # all outlets in the selective outlets pool
       sample(selective_choices_allowed, replace = TRUE,             # randomly sample with prob = outlet repute (R auto-normalizes the probabilities of the subset)
              prob = selective_outlets_pool$outlet_repute)
-      
+    
     random_chosen_outlets <- outlets_tbl %>%                        # from
       pull(outlet_id) %>%                                           # all outlets in the universe
       sample(random_choices_allowed, replace = TRUE,                # randomly sample with prob = outlet_repute
@@ -200,12 +218,17 @@ run_simulation <- function(n1, n2, n3, n4, pl_exp, rho, N) {
   all_o_ds <- NULL
   for(i in 1:N) {
     message(paste0("rho : ", rho, " Run : ", i))
-    test <- get_simulated_network(n1, n2, n3, n4, a, rho)
+    
+    
+    test <- get_simulated_network(n1, n2, n3, n4, a, rho, stop_debug = FALSE)
+    
+    # the next line is if you need to debug at a particular iteration (value of i)
+    # test <- get_simulated_network(n1, n2, n3, n4, a, rho, stop_debug = ifelse(i == 24, TRUE, FALSE))
     
     g <- test[[1]]
     g_sl <- test[[2]]
     o_tbl <- test[[3]]
-    
+  
     plot(g)
     
     # save(g_sl, file = paste0("simulated_network_data_100/rho_", rho, "/", n1, "_", n2, "_", i, ".RData"))
@@ -357,11 +380,11 @@ run_simulation <- function(n1, n2, n3, n4, pl_exp, rho, N) {
 # n_simulations, N = the number of simulations
 
 n_simulations = 100
-from_rho = 0
-to_rho = 1
+from_rho = 0.4
+to_rho = 0.4
 a = 1.5
 for(r in seq(from = from_rho, to = to_rho, by = 0.1)) {
   set.seed(1009)
   simulation_results <- run_simulation(n1 = 50, n2 = 100, n4 = 5, pl_exp = a, rho = r, N=n_simulations)
-  write_csv(simulation_results, paste0("results/CLOUD_NMI_PL_N_", n_simulations, "_rho_", r, "_alpha_", a, ".csv"))
+  # write_csv(simulation_results, paste0("results/CLOUD_NMI_PL_N_", n_simulations, "_rho_", r, "_alpha_", a, ".csv"))
 }
