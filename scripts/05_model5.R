@@ -1,6 +1,7 @@
 library(tidyverse)
 library(igraph)
 library(aricode)
+library(poweRlaw)
 
 # the only difference between model 3 and model 4 is the calculation of prediction accuracy
 # instead of doing a naive accuracy calculation, in this I'm using
@@ -13,43 +14,34 @@ library(aricode)
 # n2: number of members of the audiences
 # n4: number of types of websites / people
 
-# alpha:
+# rho:
 # each person visits a total of n3 websites
-# which websites they visit depends on a tuning parameter alpha (which controls their randomness)
-# when alpha is 0 they can only visit websites whose outlet_id == their own p_id
-# when alpha is 1 they can visit any website
-# when alpha is 0.5, half of the websites they visit can be any website, the other half have to be restricted to those whose outlet_id == p_id
+# which websites they visit depends on a tuning parameter rho (which controls their randomness)
+# when rho is 0 they can only visit websites whose outlet_id == their own p_id
+# when rho is 1 they can visit any website
+# when rho is 0.5, half of the websites they visit can be any website, the other half have to be restricted to those whose outlet_id == p_id
 
 ################################################################
 
-get_simulated_network <- function(n1, n2, n3, n4, alpha) {
-  
-  # this model no longer uses n3. Instead each person visits a different number of websites
-  # if n3 is missing choose a random number from 2 to half the number of outlets in the universe
-  # if(missing(n3)) {
-  #   n3 <- sample(seq(from = 2,
-  #                    to = ifelse((n1/2)%%2 == 0,
-  #                                n1/2,
-  #                                (n1/2)-1),
-  #                    by = 2),
-  #                1)
-  # }
+get_simulated_network <- function(n1, n2, n3, n4, a, rho) {
   
   outlet_ids <- 1:n1
   p_ids <- 1:n2
   types <- LETTERS[1:n4]
   
+  outlet_rep <-  rpldis(n1, 1, alpha = a) # power law distribution
+  outlet_rep_normalized <- outlet_rep / sum(outlet_rep)
+  
   outlets_tbl <- tibble(
     outlet_id = outlet_ids,
     outlet_name = paste("O", outlet_ids, sep = "_"),
-    # outlet_type = rep(types, each = n1/n4)
-    outlet_type = sample(types, size = n1, replace = TRUE)
+    outlet_type = sample(types, size = n1, replace = TRUE),
+    outlet_repute = outlet_rep_normalized
   )
   
   audience_tbl <- tibble(
     p_id = p_ids,
     p_name = paste("P", p_ids, sep = ""),
-    # p_type = rep(types, each = n2/n4)
     p_type = sample(types, size = n2, replace = TRUE)
   )
   
@@ -60,37 +52,33 @@ get_simulated_network <- function(n1, n2, n3, n4, alpha) {
     
     n3 <- sample(1:n1, 1)
     
-    # when alpha is 0 all of their choices are selective
-    # when alpha is 1 all of their choices are random
-    random_choices_allowed <- round(alpha * n3)
+    # when rho is 0 all of their choices are selective
+    # when rho is 1 all of their choices are random
+    random_choices_allowed <- round(rho * n3)
     selective_choices_allowed <- n3 - random_choices_allowed
     
     # print(n3)
     # print(random_choices_allowed)
     # print(selective_choices_allowed)
     
-    if(outlets_tbl %>%
-       filter(outlet_type == audience_tbl$p_type[p]) %>%
-       pull(outlet_id) %>%
-       length() == 1) {
-      
-      selective_chosen_outlets <- outlets_tbl %>%               # only from
-        filter(outlet_type == audience_tbl$p_type[p]) %>%       # those outlets where outlet_type == p_type
-        pull(outlet_id) %>%                                     #
-        rep(2) %>%
-        sample(selective_choices_allowed, replace = TRUE)
-      
-    } else {
-      
-      selective_chosen_outlets <- outlets_tbl %>%               # only from
-        filter(outlet_type == audience_tbl$p_type[p]) %>%       # those outlets where outlet_type == p_type
-        pull(outlet_id) %>%                                     #
-        sample(selective_choices_allowed, replace = TRUE)       # sample the number of selective outlets allowed
-    }
+    selective_outlets_pool <- outlets_tbl %>%
+      filter(outlet_type == audience_tbl$p_type[p]) %>%
+      select(outlet_id, outlet_repute)
     
-    random_chosen_outlets <- outlets_tbl %>%                  # from
-      pull(outlet_id) %>%                                     # all outlets in the universe
-      sample(random_choices_allowed, replace = TRUE)          # sample the number of random outlets allowed
+    if(nrow(selective_outlets_pool) == 1) {                  # this is to prevent the bug where 1 type gets 1 outlet
+      selective_outlets_pool <- selective_outlets_pool %>%
+        rbind(selective_outlets_pool)
+    }
+      
+    selective_chosen_outlets <- selective_outlets_pool %>%          # from
+      pull(outlet_id) %>%                                           # all outlets in the selective outlets pool
+      sample(selective_choices_allowed, replace = TRUE,             # randomly sample with prob = outlet repute (R auto-normalizes the probabilities of the subset)
+             prob = selective_outlets_pool$outlet_repute)
+      
+    random_chosen_outlets <- outlets_tbl %>%                        # from
+      pull(outlet_id) %>%                                           # all outlets in the universe
+      sample(random_choices_allowed, replace = TRUE,                # randomly sample with prob = outlet_repute
+             prob = outlets_tbl$outlet_repute)
     
     all_chosen_outlets <- c(selective_chosen_outlets,
                             random_chosen_outlets)
@@ -199,21 +187,23 @@ get_NMI <- function(c, outlet_types) {
     NMI_score <- NA
   
   return(NMI_score)
-    
+  
 }
 
-run_simulation <- function(n1, n2, n3, n4, alpha, N) {
+run_simulation <- function(n1, n2, n3, n4, pl_exp, rho, N) {
   res_tbl <- NULL
   all_o_ds <- NULL
   for(i in 1:N) {
-    message(paste0("alpha : ", alpha, " Run : ", i))
-    test <- get_simulated_network(n1, n2, n3, n4, alpha)
+    message(paste0("rho : ", rho, " Run : ", i))
+    test <- get_simulated_network(n1, n2, n3, n4, a, rho)
     
     g <- test[[1]]
     g_sl <- test[[2]]
     o_tbl <- test[[3]]
     
-    # save(g_sl, file = paste0("simulated_network_data_100/alpha_", alpha, "/", n1, "_", n2, "_", i, ".RData"))
+    plot(g)
+    
+    # save(g_sl, file = paste0("simulated_network_data_100/rho_", rho, "/", n1, "_", n2, "_", i, ".RData"))
     
     c_wt <- tryCatch(
       cluster_walktrap(g),
@@ -342,7 +332,7 @@ run_simulation <- function(n1, n2, n3, n4, alpha, N) {
     
     res_tbl <- tibble(
       run = i,
-      alpha = alpha,
+      rho = rho,
       method = cd_used,
       NMI_scores = NMI_scores
     ) %>%
@@ -357,14 +347,16 @@ run_simulation <- function(n1, n2, n3, n4, alpha, N) {
 # n2 = number of members of the audiences
 # n3 = number of websites each person visits
 # n4 = number of types of websites / people
+# a = power law exponent
 
 # n_simulations, N = the number of simulations
 
-n_simulations = 100
-from_alpha = 0
-to_alpha = 1
-for(a in seq(from = from_alpha, to = to_alpha, by = 0.1)) {
+n_simulations = 1
+from_rho = 0
+to_rho = 1
+a = 1.5
+for(r in seq(from = from_rho, to = to_rho, by = 0.1)) {
   set.seed(1009)
-  simulation_results <- run_simulation(n1 = 50, n2 = 100, n4 = 5, alpha = a, N=n_simulations)
-  write_csv(simulation_results, paste0("data/CLOUD_NMI_N_", n_simulations, "_alpha_", a, ".csv"))
+  simulation_results <- run_simulation(n1 = 50, n2 = 100, n4 = 5, pl_exp = a, rho = r, N=n_simulations)
+  write_csv(simulation_results, paste0("data/CLOUD_NMI_PL_N_", n_simulations, "_rho_", r, "_alpha_", a, ".csv"))
 }
