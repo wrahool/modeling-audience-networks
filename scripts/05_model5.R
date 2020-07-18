@@ -363,5 +363,5 @@ a = 1.5
 for(r in seq(from = from_rho, to = to_rho, by = 0.1)) {
   set.seed(1009)
   simulation_results <- run_simulation(n1 = 50, n2 = 100, n4 = 5, pl_exp = a, rho = r, N=n_simulations)
-  write_csv(simulation_results, paste0("data/CLOUD_NMI_PL_N_", n_simulations, "_rho_", r, "_alpha_", a, ".csv"))
+  write_csv(simulation_results, paste0("results/CLOUD_NMI_PL_N_", n_simulations, "_rho_", r, "_alpha_", a, ".csv"))
 }
