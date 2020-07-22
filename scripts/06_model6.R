@@ -49,7 +49,7 @@ sample_atleast_once <- function(x, n){
 }
 
 
-get_simulated_network <- function(n1, n2, n3, n4, a, rho, stop_debug = FALSE) {
+get_simulated_network <- function(n1, n2, n3, n4, a, rho, sk, stop_debug = FALSE) {
   
   outlet_ids <- 1:n1
   p_ids <- 1:n2
@@ -65,11 +65,15 @@ get_simulated_network <- function(n1, n2, n3, n4, a, rho, stop_debug = FALSE) {
     outlet_repute = outlet_rep_normalized
   )
   
+  all_n3 <- rsnorm(n = n2, mean = 0, sd = 1, xi = sk)
+  all_n3_scaled <- round(((all_n3 - min(all_n3))/(max(all_n3)-min(all_n3))*(n1-1) + 1))
+  
   audience_tbl <- tibble(
     p_id = p_ids,
     p_name = paste("P", p_ids, sep = ""),
     p_type = sample_atleast_once(types, n2),       # at least one audience member of each type
-    p_n3 = sample(1:n1, n2)
+    p_n3 = sample(1:n1, n2, replace = TRUE)
+    # p_n3 = all_n3_scaled
   )
   
   audience_el <- NULL
@@ -217,14 +221,14 @@ get_NMI <- function(c, outlet_types) {
   
 }
 
-run_simulation <- function(n1, n2, n3, n4, pl_exp, rho, N) {
+run_simulation <- function(n1, n2, n3, n4, pl_exp, rho, sk, N) {
   res_tbl <- NULL
   all_o_ds <- NULL
   for(i in 1:N) {
     message(paste0("rho : ", rho, " Run : ", i))
     
     
-    test <- get_simulated_network(n1, n2, n3, n4, a, rho, stop_debug = FALSE)
+    test <- get_simulated_network(n1, n2, n3, n4, a, rho, sk, stop_debug = FALSE)
     
     # the next line is if you need to debug at a particular iteration (value of i)
     # test <- get_simulated_network(n1, n2, n3, n4, a, rho, stop_debug = ifelse(i == 24, TRUE, FALSE))
@@ -233,7 +237,10 @@ run_simulation <- function(n1, n2, n3, n4, pl_exp, rho, N) {
     g_sl <- test[[2]]
     o_tbl <- test[[3]]
     
-    plot(g)
+    plot(density(degree(g)))
+    
+    print(length(V(g)))
+    
     
     # save(g_sl, file = paste0("simulated_network_data_100/rho_", rho, "/", n1, "_", n2, "_", i, ".RData"))
     
@@ -380,15 +387,17 @@ run_simulation <- function(n1, n2, n3, n4, pl_exp, rho, N) {
 # n3 = number of websites each person visits
 # n4 = number of types of websites / people
 # a = power law exponent
+# b = skewness of distribution of n3
 
 # n_simulations, N = the number of simulations
 
-n_simulations = 100
+n_simulations = 1
 from_rho = 0
 to_rho = 1
 a = 1.5
+b = 3
 for(r in seq(from = from_rho, to = to_rho, by = 0.1)) {
   set.seed(1009)
-  simulation_results <- run_simulation(n1 = 50, n2 = 100, n4 = 5, pl_exp = a, rho = r, N=n_simulations)
-  write_csv(simulation_results, paste0("results/CLOUD_NMI_PL_N_", n_simulations, "_rho_", r, "_alpha_", a, ".csv"))
+  simulation_results <- run_simulation(n1 = 50, n2 = 100, n4 = 5, pl_exp = a, rho = r, sk = b, N = n_simulations)
+  write_csv(simulation_results, paste0("results/CLOUD_NMI_pl_", a, "_sk_", b, "_rho_", r, "_alpha_", a, "_N_", n_simulations, ".csv"))
 }
