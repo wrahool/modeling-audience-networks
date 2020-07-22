@@ -238,11 +238,6 @@ run_simulation <- function(n1, n2, n3, n4, pl_exp, rho, sk, N) {
     g_sl <- test[[2]]
     o_tbl <- test[[3]]
     
-    plot(density(degree(g)))
-    
-    print(length(V(g)))
-    
-    
     # save(g_sl, file = paste0("simulated_network_data_100/rho_", rho, "/", n1, "_", n2, "_", i, ".RData"))
     
     c_wt <- tryCatch(
