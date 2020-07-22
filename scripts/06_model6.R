@@ -392,7 +392,7 @@ run_simulation <- function(n1, n2, n3, n4, pl_exp, rho, sk, N) {
 
 # n_simulations, N = the number of simulations
 
-n_simulations = 1
+n_simulations = 100
 from_rho = 0
 to_rho = 1
 a = 1.5
@@ -400,5 +400,9 @@ b = 3
 for(r in seq(from = from_rho, to = to_rho, by = 0.1)) {
   set.seed(1009)
   simulation_results <- run_simulation(n1 = 50, n2 = 100, n4 = 5, pl_exp = a, rho = r, sk = b, N = n_simulations)
-  write_csv(simulation_results, paste0("results/CLOUD_NMI_pl_", a, "_sk_", b, "_rho_", r, "_alpha_", a, "_N_", n_simulations, ".csv"))
+  write_csv(simulation_results, paste0("results/CLOUD_NMI_pl_", a, 
+                                                        "_sk_", b,
+                                                        "_rho_", r,
+                                                        "_alpha_", a,
+                                                        "_N_", n_simulations, ".csv"))
 }
