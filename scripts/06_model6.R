@@ -94,7 +94,7 @@ get_simulated_network <- function(n1, n2, n3, n4, a, rho, sk, stop_debug = FALSE
     # print(selective_choices_allowed)
     
     selective_outlets_pool <- outlets_tbl %>%
-      filter(outlet_type == audience_tbl$p_type[p]) %>%
+      dplyr::filter(outlet_type == audience_tbl$p_type[p]) %>%
       select(outlet_id, outlet_repute)
     
     if(nrow(selective_outlets_pool) == 1) {                  # this is to prevent the bug where 1 type gets 1 outlet
@@ -129,7 +129,7 @@ get_simulated_network <- function(n1, n2, n3, n4, a, rho, sk, stop_debug = FALSE
     pull(outlet_name) %>%
     table() %>%
     as_tibble() %>%
-    rename(uv = n) %>%
+    dplyr::rename(uv = n) %>%
     select(outlet_name = 1, everything())
   
   audience_g <- graph_from_data_frame(audience_el, directed = F)
@@ -141,7 +141,7 @@ get_simulated_network <- function(n1, n2, n3, n4, a, rho, sk, stop_debug = FALSE
   V(outlet_projection)$type <- V(outlet_projection)$name %>%
     lapply(FUN = function(x) { 
       outlets_tbl %>%
-        filter(outlet_name == x) %>% 
+        dplyr::filter(outlet_name == x) %>% 
         pull(outlet_type)
     }
     ) %>%
@@ -158,7 +158,7 @@ get_simulated_network <- function(n1, n2, n3, n4, a, rho, sk, stop_debug = FALSE
   outlet_projection_sl[from=V(outlet_projection_sl), to=V(outlet_projection_sl)] = 1
   for(v in V(outlet_projection_sl)$name) {
     E(outlet_projection_sl)[v %--% v]$weight <- outlet_reach %>% 
-      filter(outlet_name == v) %>%
+      dplyr::filter(outlet_name == v) %>%
       pull(uv)
   }
   
@@ -181,7 +181,7 @@ get_prediction_accuracy <- function(c, outlet_types) {
   for(i in 1:length(c)) {
     
     predicted_type_i <- outlet_types %>%
-      filter(outlet_name %in% c[[i]]) %>%
+      dplyr::filter(outlet_name %in% c[[i]]) %>%
       pull(outlet_type) %>%
       mode() %>%
       rep(length(c[[i]]))
@@ -197,7 +197,7 @@ get_prediction_accuracy <- function(c, outlet_types) {
     merge(pred_tbl)
   
   pred_tbl %>%
-    filter(outlet_type == pred_type) %>%
+    dplyr::filter(outlet_type == pred_type) %>%
     nrow %>%
     `/` (nrow(pred_tbl))
   
