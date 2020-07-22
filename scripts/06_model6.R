@@ -2,6 +2,7 @@ library(tidyverse)
 library(igraph)
 library(aricode)
 library(poweRlaw)
+library(fGarch)
 
 # model 6
 
@@ -72,8 +73,8 @@ get_simulated_network <- function(n1, n2, n3, n4, a, rho, sk, stop_debug = FALSE
     p_id = p_ids,
     p_name = paste("P", p_ids, sep = ""),
     p_type = sample_atleast_once(types, n2),       # at least one audience member of each type
-    p_n3 = sample(1:n1, n2, replace = TRUE)
-    # p_n3 = all_n3_scaled
+    # p_n3 = sample(1:n1, n2, replace = TRUE)
+    p_n3 = all_n3_scaled
   )
   
   audience_el <- NULL
