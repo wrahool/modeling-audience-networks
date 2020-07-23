@@ -454,7 +454,7 @@ run_simulation <- function(n1, n2, n3, n4, pl_exp, rho, sk, N) {
 # n_simulations, N = the number of simulations
 
 n_simulations = 100
-from_rho = 0
+from_rho = 1
 to_rho = 1
 a = 1.5
 b = 3
