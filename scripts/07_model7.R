@@ -252,9 +252,26 @@ get_NMI <- function(c, outlet_types) {
 
 # function to calculate the input mixing parameter of a graph ig,
 # using outlet_types
-
-get_mixing_parameter <- function(ig, outlet_types) {
   
+get_mixing_parameter <- function(ig, outlet_types) {
+    
+    edge_ends <- data.frame(ends(ig, E(ig))) %>% 
+      as_tibble()
+    
+    o_tbl <- outlet_types %>%
+      select(outlet_name, outlet_type)
+    
+    c <- edge_ends %>%
+      inner_join(o_tbl, by = c("X1" = "outlet_name")) %>%
+      rename("X1_type" = "outlet_type") %>%
+      inner_join(o_tbl, by = c("X2" = "outlet_name")) %>%
+      rename("X2_type" = "outlet_type") %>%
+      mutate(edgetype = ifelse(X1_type == X2_type, "in", "out")) %>%
+      dplyr::filter(edgetype == "out") %>%
+      nrow() %>%
+      `/` (nrow(edge_ends))
+    
+    return(c)
 }
 
 run_simulation <- function(n1, n2, n3, n4, pl_exp, rho, sk, N) {
@@ -274,7 +291,7 @@ run_simulation <- function(n1, n2, n3, n4, pl_exp, rho, sk, N) {
     g_sl <- test[[2]]
     o_tbl <- test[[3]]
     
-    # save(g_sl, file = paste0("simulated_network_data_100/rho_", rho, "/", n1, "_", n2, "_", i, ".RData"))
+    # save(list(g, g_sl, o_tbl), file = paste0("network_data/mixing_parameter_rdata/rho_", rho, "_", n1, "_", n2, "_", i, ".RData"))
     
     rho_mxps <- tibble(
       curr_rho = rho,
@@ -436,9 +453,9 @@ run_simulation <- function(n1, n2, n3, n4, pl_exp, rho, sk, N) {
 
 # n_simulations, N = the number of simulations
 
-n_simulations = 5
+n_simulations = 100
 from_rho = 0
-to_rho = 0
+to_rho = 1
 a = 1.5
 b = 3
 for(r in seq(from = from_rho, to = to_rho, by = 0.1)) {
@@ -449,7 +466,7 @@ for(r in seq(from = from_rho, to = to_rho, by = 0.1)) {
                                        "_rho_", r,
                                        "_alpha_", a,
                                        "_N_", n_simulations, ".csv"))
-  write_csv(simulation_results[[2]], paste0("results/MXP_CLOUD_NMI_pl_", a, 
+  write_csv(simulation_results[[2]], paste0("results/MXP_CLOUD_NMI_pl_", a,
                                             "_sk_", b,
                                             "_rho_", r,
                                             "_alpha_", a,
