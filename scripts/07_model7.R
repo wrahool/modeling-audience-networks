@@ -466,6 +466,7 @@ for(r in seq(from = from_rho, to = to_rho, by = 0.1)) {
                                        "_rho_", r,
                                        "_alpha_", a,
                                        "_N_", n_simulations, ".csv"))
+  
   write_csv(simulation_results[[2]], paste0("results/MXP_CLOUD_NMI_pl_", a,
                                             "_sk_", b,
                                             "_rho_", r,
