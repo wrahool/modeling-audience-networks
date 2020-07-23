@@ -252,7 +252,7 @@ run,rho,method,NMI_scores
 85,0,lp,1
 85,0,lp2,1
 85,0,le,NA
-85,0,le2,NA
+85,0,le2,1
 85,0,sl,NA
 85,0,sl2,NA
 84,0,wt,1
@@ -588,7 +588,7 @@ run,rho,method,NMI_scores
 64,0,lp,1
 64,0,lp2,1
 64,0,le,1
-64,0,le2,1
+64,0,le2,NA
 64,0,sl,NA
 64,0,sl2,NA
 63,0,wt,1
@@ -1275,8 +1275,8 @@ run,rho,method,NMI_scores
 21,0,im2,1
 21,0,lp,1
 21,0,lp2,1
-21,0,le,1
-21,0,le2,1
+21,0,le,NA
+21,0,le2,NA
 21,0,sl,NA
 21,0,sl2,NA
 20,0,wt,1

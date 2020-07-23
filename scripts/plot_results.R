@@ -100,3 +100,22 @@ ggplot(NMI_PL_results) +
   facet_wrap(.~method, nrow = 8, ncol = 2) +
   theme_bw()
 
+# plotting NMI w/ scale free w/ skewed n3
+
+reqd_files_indices <- list.files("results/") %>%
+  grep(pattern = "sk")
+
+reqd_files <- list.files("results/")[reqd_files_indices]
+
+NMI_PL_SK_results <- NULL
+for(file in reqd_files) {
+  NMI_PL_SK_result <- read_csv(paste0("results/", file))
+  NMI_PL_SK_results <- NMI_PL_SK_result %>%
+    rbind(NMI_PL_SK_results)
+}
+
+ggplot(NMI_PL_SK_results) +
+  geom_boxplot(aes(x=as_factor(rho), y=NMI_scores)) +
+  geom_hline(aes(yintercept=0.5), color = "#FF0000")+
+  facet_wrap(.~method, nrow = 8, ncol = 2) +
+  theme_bw()

@@ -16,6 +16,13 @@ library(fGarch)
 # in model 6, the number of outlets each person visits is not randomly chosen from 1:n2
 # instead they follow a positively (right) skewed bell curve
 
+# you get accuracy < 1 even with rho = 0 iff some person(s) visit(s) only 1 specific website
+# in this case, this happens in simulation number 53 where person # 84 visits only outlet # 47
+# and no one else visits that outlet
+
+# to debug this script, you need to first identify which simulation you want to debug
+# and then pass stop_debug = TRUE for that simulation in the get_simulated_network function
+
 ################################################################
 # model parameters
 
@@ -107,6 +114,16 @@ get_simulated_network <- function(n1, n2, n3, n4, a, rho, sk, stop_debug = FALSE
       sample(selective_choices_allowed, replace = TRUE,             # randomly sample with prob = outlet repute (R auto-normalizes the probabilities of the subset)
              prob = selective_outlets_pool$outlet_repute)
     
+    if (stop_debug) {
+      print("Person Number:")
+      print(p)
+      print("Visisted # of websites:")
+      print(n3)
+      print("These are the websites:")
+      print(selective_chosen_outlets)
+      print("----------------------------------------")
+    }
+    
     random_chosen_outlets <- outlets_tbl %>%                        # from
       pull(outlet_id) %>%                                           # all outlets in the universe
       sample(random_choices_allowed, replace = TRUE,                # randomly sample with prob = outlet_repute
@@ -131,6 +148,10 @@ get_simulated_network <- function(n1, n2, n3, n4, a, rho, sk, stop_debug = FALSE
     as_tibble() %>%
     dplyr::rename(uv = n) %>%
     select(outlet_name = 1, everything())
+  
+  if(stop_debug) {
+    View(outlet_reach)
+  }
   
   audience_g <- graph_from_data_frame(audience_el, directed = F)
   V(audience_g)$type <- substr(V(audience_g)$name, 1, 1) == "O"
@@ -160,6 +181,10 @@ get_simulated_network <- function(n1, n2, n3, n4, a, rho, sk, stop_debug = FALSE
     E(outlet_projection_sl)[v %--% v]$weight <- outlet_reach %>% 
       dplyr::filter(outlet_name == v) %>%
       pull(uv)
+  }
+  
+  if(stop_debug) {
+    plot(outlet_projection)
   }
   
   return(list(outlet_projection, outlet_projection_sl, outlets_tbl))
@@ -228,11 +253,11 @@ run_simulation <- function(n1, n2, n3, n4, pl_exp, rho, sk, N) {
   for(i in 1:N) {
     message(paste0("rho : ", rho, " Run : ", i))
     
-    
+    # without debug
     test <- get_simulated_network(n1, n2, n3, n4, a, rho, sk, stop_debug = FALSE)
     
     # the next line is if you need to debug at a particular iteration (value of i)
-    # test <- get_simulated_network(n1, n2, n3, n4, a, rho, stop_debug = ifelse(i == 24, TRUE, FALSE))
+    # test <- get_simulated_network(n1, n2, n3, n4, a, rho, sk, stop_debug = ifelse(i == 53, TRUE, FALSE))
     
     g <- test[[1]]
     g_sl <- test[[2]]
@@ -365,6 +390,12 @@ run_simulation <- function(n1, n2, n3, n4, pl_exp, rho, sk, N) {
       get_NMI(x, o_tbl)
     })
     
+    # how to identify which simulation you need to investigate
+    # if(NMI_scores[1] != 1) {
+    #   print(i)
+    #   print(length(cluster_walktrap(g)))
+    # }
+    
     res_tbl <- tibble(
       run = i,
       rho = rho,
@@ -389,7 +420,7 @@ run_simulation <- function(n1, n2, n3, n4, pl_exp, rho, sk, N) {
 
 n_simulations = 100
 from_rho = 0
-to_rho = 1
+to_rho = 0
 a = 1.5
 b = 3
 for(r in seq(from = from_rho, to = to_rho, by = 0.1)) {
