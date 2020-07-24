@@ -304,7 +304,8 @@ run_simulation <- function(n1, n2, n3, n4, pl_exp, rho, sk, N) {
   res_tbl <- NULL
   rho_mxps <- NULL
   
-  for(i in 1:N) {
+  i <- 1
+  while(i <= N) {
     message(paste0("rho : ", rho, " Run : ", i))
     
     # without debug
@@ -317,6 +318,10 @@ run_simulation <- function(n1, n2, n3, n4, pl_exp, rho, sk, N) {
     g_sl <- test[[2]]
     o_tbl <- test[[3]]
     
+    if(length(V(g)) <= 1) {
+      message("Rerun...")
+      next
+    }
     # save(list(g, g_sl, o_tbl), file = paste0("network_data/mixing_parameter_rdata/rho_", rho, "_", n1, "_", n2, "_", i, ".RData"))
     
     rho_mxps <- tibble(
@@ -465,6 +470,8 @@ run_simulation <- function(n1, n2, n3, n4, pl_exp, rho, sk, N) {
       NMI_scores = NMI_scores
     ) %>%
       rbind(res_tbl)
+    
+    i <- i+1
   }
   
   return(list(res_tbl, rho_mxps))
@@ -486,7 +493,7 @@ to_rho = 1
 a = 1.5
 b = 3
 for(r in seq(from = from_rho, to = to_rho, by = 0.1)) {
-  set.seed(9)
+  set.seed(108)
   simulation_results <- run_simulation(n1 = 50, n2 = 100, n4 = 5, pl_exp = a, rho = r, sk = b, N = n_simulations)
   write_csv(simulation_results[[1]], paste0("results/NMI_pl_", a, 
                                        "_sk_", b,
