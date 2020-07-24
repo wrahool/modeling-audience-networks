@@ -31,10 +31,10 @@ library(fGarch)
 
 # n1: number of websites in the universe
 # n2: number of members of the audiences
-# n4: number of types of websites / people
+# n3: number of types of websites / people
 
 # rho:
-# each person visits a total of n3 websites
+# each person visits a total of n4 websites
 # which websites they visit depends on a tuning parameter rho (which controls their randomness)
 # when rho is 0 they can only visit websites whose outlet_id == their own p_id
 # when rho is 1 they can visit any website
@@ -60,11 +60,11 @@ sample_atleast_once <- function(x, n){
 }
 
 
-get_simulated_network <- function(n1, n2, n3, n4, a, rho, sk, stop_debug = FALSE) {
+get_simulated_network <- function(n1, n2, n4, n3, a, rho, sk, stop_debug = FALSE) {
   
   outlet_ids <- 1:n1
   p_ids <- 1:n2
-  types <- LETTERS[1:n4]
+  types <- LETTERS[1:n3]
   
   outlet_rep <-  rpldis(n1, 1, alpha = a) # power law distribution
   outlet_rep_normalized <- outlet_rep / sum(outlet_rep)
@@ -76,15 +76,15 @@ get_simulated_network <- function(n1, n2, n3, n4, a, rho, sk, stop_debug = FALSE
     outlet_repute = outlet_rep_normalized
   )
   
-  all_n3 <- rsnorm(n = n2, mean = 0, sd = 1, xi = sk)
-  all_n3_scaled <- round(((all_n3 - min(all_n3))/(max(all_n3)-min(all_n3))*(n1-1) + 1))
+  all_n4 <- rsnorm(n = n2, mean = 0, sd = 1, xi = sk)
+  all_n4_scaled <- round(((all_n4 - min(all_n4))/(max(all_n4)-min(all_n4))*(n1-1) + 1))
   
   audience_tbl <- tibble(
     p_id = p_ids,
     p_name = paste("P", p_ids, sep = ""),
     p_type = sample_atleast_once(types, n2),       # at least one audience member of each type
-    # p_n3 = sample(1:n1, n2, replace = TRUE)
-    p_n3 = all_n3_scaled
+    # p_n4 = sample(1:n1, n2, replace = TRUE)
+    p_n4 = all_n4_scaled
   )
   
   audience_el <- NULL
@@ -97,12 +97,12 @@ get_simulated_network <- function(n1, n2, n3, n4, a, rho, sk, stop_debug = FALSE
   # loop over each person
   for(p in 1:n2) {
     
-    n3 <- audience_tbl$p_n3[p]
+    n4 <- audience_tbl$p_n4[p]
     
     # when rho is 0 all of their choices are selective
     # when rho is 1 all of their choices are random
-    random_choices_allowed <- round(rho * n3)
-    selective_choices_allowed <- n3 - random_choices_allowed
+    random_choices_allowed <- round(rho * n4)
+    selective_choices_allowed <- n4 - random_choices_allowed
     
     selective_outlets_pool <- outlets_tbl %>%
       dplyr::filter(outlet_type == audience_tbl$p_type[p]) %>%
@@ -126,13 +126,13 @@ get_simulated_network <- function(n1, n2, n3, n4, a, rho, sk, stop_debug = FALSE
 #       print("Person Number:")
 #       print(p)
 #       print("Visisted # of websites:")
-#       print(n3)
+#       print(n4)
 #       print("These are the websites:")
 #       print(selective_chosen_outlets)
 #       print("----------------------------------------")
 #       
 #       fileConn<-file("output.txt")
-#       writeLines(c(p," : ", n3, " : ", selective_chosen_outlets), fileConn)
+#       writeLines(c(p," : ", n4, " : ", selective_chosen_outlets), fileConn)
 #       close(fileConn)
 # 
 #     }
@@ -145,31 +145,15 @@ get_simulated_network <- function(n1, n2, n3, n4, a, rho, sk, stop_debug = FALSE
     all_chosen_outlets <- c(selective_chosen_outlets,
                             random_chosen_outlets)
     
-    # if(stop_debug) {
-    #   print(p)
-    #   print(n3)
-    #   print(".....")
-    #   print(outlets_tbl$outlet_id)
-    #   print("............")
-    #   print(random_chosen_outlets)
-    #   print(".....................")
-    #   print(all_chosen_outlets)
-    #   print("----------------------------")
-    # }
-    
     # build the edge-list for the audience network
     audience_el <- audience_el %>%
       rbind(
         tibble(
-          p_name = paste("P", rep(p, n3), sep = "_"),             # one column is the p_id
+          p_name = paste("P", rep(p, n4), sep = "_"),             # one column is the p_id
           outlet_name = paste("O", all_chosen_outlets, sep = "_") # second column is the outlet_id
         )
       )
   }
-  
-  # if (stop_debug) {
-  #   inp <- readline(prompt="Enter 1: ")
-  # }
   
   outlet_reach <- audience_el %>%
     pull(outlet_name) %>%
@@ -177,10 +161,6 @@ get_simulated_network <- function(n1, n2, n3, n4, a, rho, sk, stop_debug = FALSE
     as_tibble() %>%
     dplyr::rename(uv = n) %>%
     select(outlet_name = 1, everything())
-  
-  # if(stop_debug) {
-  #   View(outlet_reach)
-  # }
   
   audience_g <- graph_from_data_frame(audience_el, directed = F)
   V(audience_g)$type <- substr(V(audience_g)$name, 1, 1) == "O"
@@ -300,7 +280,7 @@ get_mixing_parameter <- function(ig, outlet_types) {
     return(c)
 }
 
-run_simulation <- function(n1, n2, n3, n4, pl_exp, rho, sk, N) {
+run_simulation <- function(n1, n2, n4, n3, pl_exp, rho, sk, N) {
   res_tbl <- NULL
   rho_mxps <- NULL
   
@@ -309,10 +289,10 @@ run_simulation <- function(n1, n2, n3, n4, pl_exp, rho, sk, N) {
     message(paste0("rho : ", rho, " Run : ", i))
     
     # without debug
-    test <- get_simulated_network(n1, n2, n3, n4, a, rho, sk, stop_debug = FALSE)
+    test <- get_simulated_network(n1, n2, n4, n3, a, rho, sk, stop_debug = FALSE)
     
     # the next line is if you need to debug at a particular iteration (value of i)
-    # test <- get_simulated_network(n1, n2, n3, n4, a, rho, sk, stop_debug = ifelse(i == 61, TRUE, FALSE))
+    # test <- get_simulated_network(n1, n2, n4, n3, a, rho, sk, stop_debug = ifelse(i == 61, TRUE, FALSE))
     
     g <- test[[1]]
     g_sl <- test[[2]]
@@ -429,9 +409,6 @@ run_simulation <- function(n1, n2, n3, n4, pl_exp, rho, sk, N) {
       }
     )
     
-    # c_o <- cluster_optimal(g)
-    # c_o2 <- cluster_optimal(g_sl)
-    
     all_cs <- list(c_wt, c_wt2,
                    c_l, c_l2,
                    c_fg, c_fg2,
@@ -480,28 +457,49 @@ run_simulation <- function(n1, n2, n3, n4, pl_exp, rho, sk, N) {
 
 # n1 = number of websites in the universe
 # n2 = number of members of the audiences
-# n3 = number of websites each person visits
-# n4 = number of types of websites / people
+# n3 = number of types of websites / people
 # a = power law exponent
-# b = skewness of distribution of n3
+# b = skewness of distribution of n4
 
 # n_simulations, N = the number of simulations
 
-n_simulations = 100
-from_rho = 0
-to_rho = 1
+n_outlets <- 50
+n_audience <- 100
+n_types <- 5
+n_simulations <- 100
+from_rho <- 0
+to_rho <- 1
+rh0_inc <- 0.1
 a = 1.5
 b = 3
-for(r in seq(from = from_rho, to = to_rho, by = 0.1)) {
-  set.seed(108)
-  simulation_results <- run_simulation(n1 = 50, n2 = 100, n4 = 5, pl_exp = a, rho = r, sk = b, N = n_simulations)
-  write_csv(simulation_results[[1]], paste0("results/NMI_pl_", a, 
-                                       "_sk_", b,
-                                       "_rho_", r,
-                                       "_alpha_", a,
-                                       "_N_", n_simulations, ".csv"))
+for(r in seq(from = from_rho, to = to_rho, by = rho_inc)) {
   
-  write_csv(simulation_results[[2]], paste0("results/MXP_pl_", a,
+  # set the same seed for a specific rho so that errors within each rho can be easily replicated
+  set.seed(108)
+  
+  simulation_results <- run_simulation(n1 = n_outlets,
+                                       n2 = n_audience,
+                                       n3 = n_types,
+                                       pl_exp = a,
+                                       rho = r,
+                                       sk = b,
+                                       N = n_simulations)
+  
+  write_csv(simulation_results[[1]], paste0("results/NMI
+                                            _n1_", n_outlets,
+                                            "_n2_", n_audience,
+                                            "_n3_", n_types,
+                                            "_pl_", a,
+                                            "_sk_", b,
+                                            "_rho_", r,
+                                            "_alpha_", a,
+                                            "_N_", n_simulations, ".csv"))
+  
+  write_csv(simulation_results[[2]], paste0("results/MXP
+                                            _n1_", n_outlets,
+                                            "_n2_", n_audience,
+                                            "_n3_", n_types,
+                                            "_pl_", a,
                                             "_sk_", b,
                                             "_rho_", r,
                                             "_alpha_", a,
