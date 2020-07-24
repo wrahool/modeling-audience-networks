@@ -469,7 +469,7 @@ n_types <- 5
 n_simulations <- 100
 from_rho <- 0
 to_rho <- 1
-rh0_inc <- 0.1
+rho_inc <- 0.1
 a = 1.5
 b = 3
 for(r in seq(from = from_rho, to = to_rho, by = rho_inc)) {
