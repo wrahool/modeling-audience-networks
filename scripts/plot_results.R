@@ -103,12 +103,12 @@ ggplot(NMI_PL_results) +
 # plotting NMI w/ scale free w/ skewed n3
 
 reqd_files_indices <- list.files("results/") %>%
-  grep(pattern = "sk")
+  startsWith(prefix = "CLOUD")
 
-reqd_files <- list.files("results/")[reqd_files_indices]
+result_files <- list.files("results/")[reqd_files_indices]
 
 NMI_PL_SK_results <- NULL
-for(file in reqd_files) {
+for(file in result_files) {
   NMI_PL_SK_result <- read_csv(paste0("results/", file))
   NMI_PL_SK_results <- NMI_PL_SK_result %>%
     rbind(NMI_PL_SK_results)
@@ -119,3 +119,40 @@ ggplot(NMI_PL_SK_results) +
   geom_hline(aes(yintercept=0.5), color = "#FF0000")+
   facet_wrap(.~method, nrow = 8, ncol = 2) +
   theme_bw()
+
+# plotting with mixing parameter
+
+mxp_file_indices <- list.files("results/") %>%
+  startsWith(prefix = "MXP")
+
+mxp_files <- list.files("results/")[mxp_file_indices]
+
+MXP_results <- NULL
+for(file in mxp_files) {
+  MXP_result <- read_csv(paste0("results/", file))
+  MXP_results <- MXP_result %>%
+    rbind(MXP_results)
+}
+
+ggplot(MXP_results) +
+  geom_boxplot(aes(x=as.factor(curr_rho), y=mxp1)) +
+  xlab("randomizing paramter") +
+  ylab("mixing parameter") +
+  theme_bw()
+
+ggplot(MXP_results) +
+  geom_boxplot(aes(x=as.factor(curr_rho), y=mxp2)) +
+  xlab("randomizing paramter") +
+  ylab("mixing parameter with self-loops") +
+  theme_bw()
+
+cor.test(MXP_results$curr_rho,
+         MXP_results$mxp2, method = "kendall")
+
+MXP_results %>%
+  group_by(curr_rho) %>%
+  summarize(mean_mxp1 = mean(mxp1),
+            mean_mxp3 = mean(mxp2)) 
+
+
+summary(lm(MXP_results$mxp1 ~ MXP_results$curr_rho))
