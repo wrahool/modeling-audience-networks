@@ -486,7 +486,7 @@ to_rho = 1
 a = 1.5
 b = 3
 for(r in seq(from = from_rho, to = to_rho, by = 0.1)) {
-  set.seed(108)
+  set.seed(1008)
   simulation_results <- run_simulation(n1 = 50, n2 = 100, n4 = 5, pl_exp = a, rho = r, sk = b, N = n_simulations)
   write_csv(simulation_results[[1]], paste0("results/CLOUD_NMI_pl_", a, 
                                        "_sk_", b,
