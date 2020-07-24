@@ -89,6 +89,11 @@ get_simulated_network <- function(n1, n2, n3, n4, a, rho, sk, stop_debug = FALSE
   
   audience_el <- NULL
   
+  # if(stop_debug) {
+  #   View(outlets_tbl)
+  #   View(audience_tbl)
+  # }
+  
   # loop over each person
   for(p in 1:n2) {
     
@@ -99,13 +104,13 @@ get_simulated_network <- function(n1, n2, n3, n4, a, rho, sk, stop_debug = FALSE
     random_choices_allowed <- round(rho * n3)
     selective_choices_allowed <- n3 - random_choices_allowed
     
-    # print(n3)
-    # print(random_choices_allowed)
-    # print(selective_choices_allowed)
-    
     selective_outlets_pool <- outlets_tbl %>%
       dplyr::filter(outlet_type == audience_tbl$p_type[p]) %>%
       select(outlet_id, outlet_repute)
+    
+    # if (stop_debug) {
+    #   print(selective_outlets_pool)
+    # }
     
     if(nrow(selective_outlets_pool) == 1) {                  # this is to prevent the bug where 1 type gets 1 outlet
       selective_outlets_pool <- selective_outlets_pool %>%
@@ -116,17 +121,22 @@ get_simulated_network <- function(n1, n2, n3, n4, a, rho, sk, stop_debug = FALSE
       pull(outlet_id) %>%                                           # all outlets in the selective outlets pool
       sample(selective_choices_allowed, replace = TRUE,             # randomly sample with prob = outlet repute (R auto-normalizes the probabilities of the subset)
              prob = selective_outlets_pool$outlet_repute)
-    
-    if (stop_debug) {
-      print("Person Number:")
-      print(p)
-      print("Visisted # of websites:")
-      print(n3)
-      print("These are the websites:")
-      print(selective_chosen_outlets)
-      print("----------------------------------------")
-    }
-    
+# 
+#     if (stop_debug) {
+#       print("Person Number:")
+#       print(p)
+#       print("Visisted # of websites:")
+#       print(n3)
+#       print("These are the websites:")
+#       print(selective_chosen_outlets)
+#       print("----------------------------------------")
+#       
+#       fileConn<-file("output.txt")
+#       writeLines(c(p," : ", n3, " : ", selective_chosen_outlets), fileConn)
+#       close(fileConn)
+# 
+#     }
+
     random_chosen_outlets <- outlets_tbl %>%                        # from
       pull(outlet_id) %>%                                           # all outlets in the universe
       sample(random_choices_allowed, replace = TRUE,                # randomly sample with prob = outlet_repute
@@ -134,6 +144,18 @@ get_simulated_network <- function(n1, n2, n3, n4, a, rho, sk, stop_debug = FALSE
     
     all_chosen_outlets <- c(selective_chosen_outlets,
                             random_chosen_outlets)
+    
+    # if(stop_debug) {
+    #   print(p)
+    #   print(n3)
+    #   print(".....")
+    #   print(outlets_tbl$outlet_id)
+    #   print("............")
+    #   print(random_chosen_outlets)
+    #   print(".....................")
+    #   print(all_chosen_outlets)
+    #   print("----------------------------")
+    # }
     
     # build the edge-list for the audience network
     audience_el <- audience_el %>%
@@ -145,6 +167,10 @@ get_simulated_network <- function(n1, n2, n3, n4, a, rho, sk, stop_debug = FALSE
       )
   }
   
+  # if (stop_debug) {
+  #   inp <- readline(prompt="Enter 1: ")
+  # }
+  
   outlet_reach <- audience_el %>%
     pull(outlet_name) %>%
     table() %>%
@@ -152,9 +178,9 @@ get_simulated_network <- function(n1, n2, n3, n4, a, rho, sk, stop_debug = FALSE
     dplyr::rename(uv = n) %>%
     select(outlet_name = 1, everything())
   
-  if(stop_debug) {
-    View(outlet_reach)
-  }
+  # if(stop_debug) {
+  #   View(outlet_reach)
+  # }
   
   audience_g <- graph_from_data_frame(audience_el, directed = F)
   V(audience_g)$type <- substr(V(audience_g)$name, 1, 1) == "O"
@@ -186,9 +212,9 @@ get_simulated_network <- function(n1, n2, n3, n4, a, rho, sk, stop_debug = FALSE
       pull(uv)
   }
   
-  if(stop_debug) {
-    plot(outlet_projection)
-  }
+  # if(stop_debug) {
+  #   plot(outlet_projection)
+  # }
   
   return(list(outlet_projection, outlet_projection_sl, outlets_tbl))
 }
@@ -282,10 +308,10 @@ run_simulation <- function(n1, n2, n3, n4, pl_exp, rho, sk, N) {
     message(paste0("rho : ", rho, " Run : ", i))
     
     # without debug
-    test <- get_simulated_network(n1, n2, n3, n4, a, rho, sk, stop_debug = FALSE)
+    #test <- get_simulated_network(n1, n2, n3, n4, a, rho, sk, stop_debug = FALSE)
     
     # the next line is if you need to debug at a particular iteration (value of i)
-    # test <- get_simulated_network(n1, n2, n3, n4, a, rho, sk, stop_debug = ifelse(i == 53, TRUE, FALSE))
+    test <- get_simulated_network(n1, n2, n3, n4, a, rho, sk, stop_debug = ifelse(i == 61, TRUE, FALSE))
     
     g <- test[[1]]
     g_sl <- test[[2]]
@@ -323,7 +349,7 @@ run_simulation <- function(n1, n2, n3, n4, pl_exp, rho, sk, N) {
       error = function(e) {
         return(NA)
       })
-    
+
     c_fg <- tryCatch(
       cluster_fast_greedy(g),
       error = function(e) {
@@ -336,29 +362,38 @@ run_simulation <- function(n1, n2, n3, n4, pl_exp, rho, sk, N) {
         return(NA)
       })
     
+    if(i == 61) {
+      save(g, g_sl, file = "network_data/debug.RData")
+    }
+    
     c_eb <- tryCatch(
       cluster_edge_betweenness(g),
       error = function(e) {
         return(NA)
       })
     
+    if(i == 61) {
+      print("hello")
+    }
+    
     c_eb2 <- tryCatch(
       cluster_edge_betweenness(g_sl),
       error = function(e) {
         return(NA)
       })
-    
+
     c_im <- tryCatch(
       cluster_infomap(g),
       error = function(e) {
         return(NA)
       })
-    
+
     c_im2 <- tryCatch(
       cluster_infomap(g_sl),
       error = function(e) {
         return(NA)
       })
+
     
     c_lp <- tryCatch(
       cluster_label_prop(g),
@@ -377,7 +412,7 @@ run_simulation <- function(n1, n2, n3, n4, pl_exp, rho, sk, N) {
       error = function(e) {
         return(NA)
       })
-    
+
     c_le2 <- tryCatch(
       cluster_leading_eigen(g_sl),
       error = function(e) {
@@ -459,7 +494,7 @@ to_rho = 1
 a = 1.5
 b = 3
 for(r in seq(from = from_rho, to = to_rho, by = 0.1)) {
-  set.seed(1009)
+  set.seed(1008)
   simulation_results <- run_simulation(n1 = 50, n2 = 100, n4 = 5, pl_exp = a, rho = r, sk = b, N = n_simulations)
   write_csv(simulation_results[[1]], paste0("results/CLOUD_NMI_pl_", a, 
                                        "_sk_", b,

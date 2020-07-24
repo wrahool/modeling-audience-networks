@@ -22,3 +22,8 @@ for(f in list.files("simulated_network_data/alpha_0/")) {
 # sample(23, 6, replace - TRUE)
 # instead of sampling 23 6 times, the sample function samples 6 times with replacement
 # from 1 to 23
+
+
+load("network_data/debug.RData")
+
+library(igraph)
