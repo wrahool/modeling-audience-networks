@@ -308,10 +308,10 @@ run_simulation <- function(n1, n2, n3, n4, pl_exp, rho, sk, N) {
     message(paste0("rho : ", rho, " Run : ", i))
     
     # without debug
-    #test <- get_simulated_network(n1, n2, n3, n4, a, rho, sk, stop_debug = FALSE)
+    test <- get_simulated_network(n1, n2, n3, n4, a, rho, sk, stop_debug = FALSE)
     
     # the next line is if you need to debug at a particular iteration (value of i)
-    test <- get_simulated_network(n1, n2, n3, n4, a, rho, sk, stop_debug = ifelse(i == 61, TRUE, FALSE))
+    # test <- get_simulated_network(n1, n2, n3, n4, a, rho, sk, stop_debug = ifelse(i == 61, TRUE, FALSE))
     
     g <- test[[1]]
     g_sl <- test[[2]]
@@ -362,19 +362,11 @@ run_simulation <- function(n1, n2, n3, n4, pl_exp, rho, sk, N) {
         return(NA)
       })
     
-    if(i == 61) {
-      save(g, g_sl, file = "network_data/debug.RData")
-    }
-    
     c_eb <- tryCatch(
       cluster_edge_betweenness(g),
       error = function(e) {
         return(NA)
       })
-    
-    if(i == 61) {
-      print("hello")
-    }
     
     c_eb2 <- tryCatch(
       cluster_edge_betweenness(g_sl),
@@ -494,7 +486,7 @@ to_rho = 1
 a = 1.5
 b = 3
 for(r in seq(from = from_rho, to = to_rho, by = 0.1)) {
-  set.seed(1008)
+  set.seed(108)
   simulation_results <- run_simulation(n1 = 50, n2 = 100, n4 = 5, pl_exp = a, rho = r, sk = b, N = n_simulations)
   write_csv(simulation_results[[1]], paste0("results/CLOUD_NMI_pl_", a, 
                                        "_sk_", b,
