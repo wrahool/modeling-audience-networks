@@ -19,6 +19,40 @@ analyze_results <- function(n1, n2, n3, alpha, sk) {
       rbind(nmi_result)
   }
   
+  methods <- unique(gsub(pattern = "2", "", unique(nmi_results$method)))
+  
+  default_better_tbl <- NULL
+  for(r in unique(nmi_results$rho)) {
+    for(m in methods) {
+      rho_m_nmi_results <- nmi_results %>%
+        filter(method %in% c(m, paste0(m, "2")), rho == r)
+      
+      # ggplot(rho_m_nmi_results) +
+      #   geom_boxplot(aes(x=method, y=NMI_scores)) +
+      #   theme_bw()
+      
+      rho_m_nmi_results_wide <- rho_m_nmi_results %>%
+        spread(key = method, value = NMI_scores)
+    
+      wilcox_result_p <- tryCatch(
+        wilcox.test(rho_m_nmi_results_wide[[m]],
+                    rho_m_nmi_results_wide[[paste0(m, 2)]],
+                    paired = TRUE, alternative = "l")$p.value,
+        error = function(e) {
+          return(NA)
+      })
+    
+      # wilcox_result_p <- wilcox_result$p.value
+      
+      default_better_tbl <- default_better_tbl %>%
+        rbind(tibble(
+          method = m,
+          rho = r,
+          default_worse_p = wilcox_result_p
+        ))
+    }
+  }
+  
   nmi_plot <- ggplot(nmi_results) +
     geom_boxplot(aes(x=as_factor(rho), y=NMI_scores)) +
     geom_hline(aes(yintercept=0.5), color = "#FF0000")+
@@ -69,7 +103,12 @@ analyze_results <- function(n1, n2, n3, alpha, sk) {
               median_mxp2 = median(mxp2)) %>%
     cor(method = "kendall") # very high rank correlation between rho and median mxp
   
-  return(list(nmi_plot, mxp_plot, overall_kendall, mean_kendall, median_kendall))
+  return(list(nmi_plot, mxp_plot, overall_kendall, mean_kendall, median_kendall, default_better_tbl))
 }
 
 res <- analyze_results(n1 = 100, n2 = 1000, n3 = 5, alpha = 1.5, sk = 3)
+
+ggplot(res[[6]]) +
+  geom_point(aes(y=default_worse_p < 0.05, x=rho)) +
+  facet_wrap(.~method, nrow = 4) +
+  theme_bw()
