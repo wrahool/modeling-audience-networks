@@ -72,4 +72,4 @@ analyze_results <- function(n1, n2, n3, alpha, sk) {
   return(list(nmi_plot, mxp_plot, overall_kendall, mean_kendall, median_kendall))
 }
 
-res <- analyze_results(n1 = 50, n2 = 100, n3 = 5, alpha = 1.5, sk = 3)
+res <- analyze_results(n1 = 100, n2 = 1000, n3 = 5, alpha = 1.5, sk = 3)
