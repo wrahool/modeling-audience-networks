@@ -66,8 +66,13 @@ get_simulated_network <- function(n1, n2, n4, n3, a, rho, sk, stop_debug = FALSE
   p_ids <- 1:n2
   types <- LETTERS[1:n3]
   
-  outlet_rep <-  rpldis(n1, 1, alpha = a) # power law distribution
-  outlet_rep_normalized <- outlet_rep / sum(outlet_rep)
+  if(a > 1) {
+    outlet_rep <-  rpldis(n1, 1, alpha = a) # power law distribution
+    outlet_rep_normalized <- outlet_rep / sum(outlet_rep)
+  } else {
+    outlet_rep <- rep(1, n1)
+    outlet_rep_normalized <- outlet_rep / sum(outlet_rep)
+  }
   
   outlets_tbl <- tibble(
     outlet_id = outlet_ids,
@@ -470,8 +475,8 @@ n_simulations <- 100
 from_rho <- 0
 to_rho <- 1
 rho_inc <- 0.1
-a = 1.5
-b = 1
+a = 1
+b = 3
 for(r in seq(from = from_rho, to = to_rho, by = rho_inc)) {
   
   # set the same seed for a specific rho so that errors within each rho can be easily replicated
