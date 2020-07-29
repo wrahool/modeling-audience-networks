@@ -3,6 +3,7 @@ library(igraph)
 library(aricode)
 library(poweRlaw)
 library(fGarch)
+library(rjson)
 
 # model 7
 
@@ -468,15 +469,18 @@ run_simulation <- function(n1, n2, n4, n3, pl_exp, rho, sk, N) {
 
 # n_simulations, N = the number of simulations
 
-n_outlets <- 500
-n_audience <- 1000
-n_types <- 5
-n_simulations <- 100
-from_rho <- 0
-to_rho <- 1
-rho_inc <- 0.1
-a = 1.3
-b = 3
+params <- fromJSON(file = "params/params.json")
+
+n_outlets <- params$n_outlets
+n_audience <- params$n_audiences
+n_types <- params$n_types
+n_simulations <- params$n_simulations
+from_rho <- params$from_rho
+to_rho <- params$to_rho
+rho_inc <- params$rho_inc
+a = params$a
+b = params$b
+
 for(r in seq(from = from_rho, to = to_rho, by = rho_inc)) {
   
   # set the same seed for a specific rho so that errors within each rho can be easily replicated
