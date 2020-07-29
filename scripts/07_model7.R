@@ -469,11 +469,11 @@ run_simulation <- function(n1, n2, n4, n3, pl_exp, rho, sk, N) {
 # n_simulations, N = the number of simulations
 
 n_outlets <- 500
-n_audience <- 1000
+n_audience <- 10000
 n_types <- 5
 n_simulations <- 100
 from_rho <- 0
-to_rho <- 1
+to_rho <- 0.1
 rho_inc <- 0.1
 a = 1.3
 b = 3
