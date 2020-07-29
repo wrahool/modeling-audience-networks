@@ -4,7 +4,6 @@ library(aricode)
 library(poweRlaw)
 library(fGarch)
 library(rjson)
-library(rjson)
 
 # model 7
 
