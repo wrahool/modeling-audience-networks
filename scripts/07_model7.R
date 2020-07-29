@@ -4,6 +4,7 @@ library(aricode)
 library(poweRlaw)
 library(fGarch)
 library(rjson)
+library(rjson)
 
 # model 7
 
@@ -469,17 +470,17 @@ run_simulation <- function(n1, n2, n4, n3, pl_exp, rho, sk, N) {
 
 # n_simulations, N = the number of simulations
 
-params <- fromJSON(file = "params/params.json")
+model_params <- fromJSON(file = "params/model_params.json")
 
-n_outlets <- params$n_outlets
-n_audience <- params$n_audiences
-n_types <- params$n_types
-n_simulations <- params$n_simulations
-from_rho <- params$from_rho
-to_rho <- params$to_rho
-rho_inc <- params$rho_inc
-a = params$a
-b = params$b
+n_outlets <- model_params$n_outlets
+n_audience <- model_params$n_audiences
+n_types <- model_params$n_types
+n_simulations <- model_params$n_simulations
+from_rho <- model_params$from_rho
+to_rho <- model_params$to_rho
+rho_inc <- model_params$rho_inc
+a = model_params$a
+b = model_params$b
 
 for(r in seq(from = from_rho, to = to_rho, by = rho_inc)) {
   
