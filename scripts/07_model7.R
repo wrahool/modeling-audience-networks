@@ -469,7 +469,6 @@ run_simulation <- function(n1, n2, n4, n3, pl_exp, rho, sk, N) {
 
 # n_simulations, N = the number of simulations
 
-<<<<<<< HEAD
 params <- fromJSON(file = "params/params.json")
 
 n_outlets <- params$n_outlets
