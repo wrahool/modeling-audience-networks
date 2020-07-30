@@ -16,4 +16,5 @@ all_params_matrix <- do.call(rbind,
 colnames(all_params_matrix) <- unlist(strsplit(all_results[1], "_"))[c(2,4,6,8,10)]
 
 all_params_tbl <- as_tibble(all_params_matrix)
+
 print(all_params_tbl)
