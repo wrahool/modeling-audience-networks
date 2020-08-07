@@ -18,3 +18,4 @@ colnames(all_params_matrix) <- unlist(strsplit(all_results[1], "_"))[c(2,4,6,8,1
 all_params_tbl <- as_tibble(all_params_matrix)
 
 print(all_params_tbl)
+write_csv(all_params_tbl, path = "params/done_params.csv")
