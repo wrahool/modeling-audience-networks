@@ -107,7 +107,7 @@ analyze_results <- function(n1, n2, n3, alpha, sk) {
   return(list(nmi_plot, mxp_plot, overall_kendall, mean_kendall, median_kendall, default_better_tbl))
 }
 
-res <- analyze_results(n1 = 500, n2 = 1000, n3 = 5, alpha = 1.3, sk = 3)
+res <- analyze_results(n1 = 100, n2 = 1000, n3 = 5, alpha = 3, sk = 3)
 
 # ggplot(res[[6]]) +
 #   geom_point(aes(y=default_worse_p < 0.05, x=rho)) +
