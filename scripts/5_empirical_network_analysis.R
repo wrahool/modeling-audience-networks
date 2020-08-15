@@ -12,6 +12,7 @@ filepaths <- fromJSON(file = "params/filepaths.json")
 load(filepaths$network_path)
 KM_master_tbl <- read_csv(filepaths$KM_master)
 
+E(g)$shared_audience <- E(g)$shared_audience/45
 #walk-trap with self-loop
 g2 <- g
 g2[from=V(g2), to=V(g2)] <- 1
@@ -20,12 +21,12 @@ g2[from=V(g2), to=V(g2)] <- 1
 KM_master_total <- KM_master_tbl %>%
   select(Month, Media, UV) %>%
   group_by(Media) %>%
-  summarize(TotalUV = sum(UV))
+  summarize(MeanUV = mean(UV))
 
 for(v in V(g2)$name) {
   E(g2)[v %--% v]$shared_audience <- KM_master_total %>% 
     filter(Media == v) %>% 
-    pull(TotalUV)
+    pull(MeanUV)
 }
 
 WT1 <- cluster_walktrap(g, weights = E(g)$shared_audience)
@@ -46,7 +47,7 @@ LP2 <- cluster_label_prop(g2, weights = E(g2)$shared_audience)
 LE2 <- cluster_leading_eigen(g2, weights = E(g2)$shared_audience, options = list(maxiter=1000000))
 SL2 <- cluster_spinglass(g2, weights = E(g2)$shared_audience)
 
-save(WT1, WT2, L1, L2, FG1, FG2, EB1, EB2, IM1, IM2, LP1, LP2, LE1, LE2, SL1, SL2, file = "network_data/empirical_network/results.Rdata")
+save(WT1, WT2, L1, L2, FG1, FG2, EB1, EB2, IM1, IM2, LP1, LP2, LE1, LE2, SL1, SL2, file = "network_data/empirical_network/results2.Rdata")
 
 load("network_data/empirical_network/results.Rdata")
 filepaths <- fromJSON(file = "params/filepaths.json")
