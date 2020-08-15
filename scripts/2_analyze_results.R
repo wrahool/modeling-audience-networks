@@ -1,4 +1,5 @@
 library(tidyverse)
+library(stringr)
 
 set.seed(108)
 
@@ -54,10 +55,66 @@ analyze_results <- function(n1, n2, n3, alpha, sk) {
     }
   }
   
-  nmi_plot <- ggplot(nmi_results) +
-    geom_boxplot(aes(x=as_factor(rho), y=NMI_scores)) +
-    geom_hline(aes(yintercept=0.5), color = "#FF0000")+
-    facet_wrap(.~method, nrow = 8, ncol = 2) +
+  nmi_mean_sd <- nmi_results %>%
+    group_by(method, rho) %>%
+    summarize(meanNMI = mean(NMI_scores),
+              sdNMI = sd(NMI_scores)) %>%
+    ungroup() %>%
+    mutate(lower_bound = meanNMI - sdNMI,
+           upper_bound = meanNMI + sdNMI) %>%
+    mutate(type = str_sub(method, -1)) %>%
+    mutate(type = as_factor(ifelse(type %in% letters, 1, 2))) %>%
+    mutate(method = gsub("2", "", method)) %>%
+    select(method, type, rho, lower_bound, meanNMI, upper_bound)
+  
+  method <- nmi_mean_sd %>%
+    pull(method) %>%
+    unique()
+  
+  method_labels <- c("Edge Betweeneness", "Fast Greedy", "Infomap","Multilevel", 
+                    "Leading Eigenvector", "Label Propagation","Spinglass", "WalkTrap")
+  
+  names(method_labels) <- method
+  
+  nmi_ribbonplot <- ggplot(nmi_mean_sd,
+         aes(x = rho,
+             color = type,
+             fill = type)) +
+    geom_line(aes(x=rho,
+                  y=meanNMI)) +
+    geom_ribbon(aes(ymin = lower_bound,
+                    ymax = upper_bound),
+                alpha=.3,
+                linetype=0) +
+    geom_hline(aes(yintercept = 0.5),
+               color = "#FF0000",
+               linetype = "dashed") +
+    facet_wrap(~method,
+               labeller = labeller(method = method_labels),
+               nrow = 4,
+               ncol = 2) +
+    xlab("randomizing parameter") +
+    ylab("normalized mutual information score") +
+    theme_bw() +
+    scale_x_continuous(breaks = seq(from = 0, to = 1, by = 0.1)) +
+    scale_y_continuous(breaks = seq(from = 0, to = 1, by = 0.2)) +
+    theme(
+      strip.background = element_rect(
+        color="black", fill="black", size=1.5, linetype="solid"
+      ),
+      strip.text.x = element_text(
+        size = 12, color = "white"
+      )
+    ) 
+  
+  nmi_boxplot <- ggplot(nmi_results) +
+    geom_boxplot(aes(x = as_factor(rho),
+                     y = NMI_scores)) +
+    geom_hline(aes(yintercept = 0.5),
+               color = "#FF0000")+
+    facet_wrap(.~method,
+               nrow = 8,
+               ncol = 2) +
     xlab("randomizing parameter") +
     ylab("normalized mutual information score") +
     theme_bw()
@@ -82,7 +139,9 @@ analyze_results <- function(n1, n2, n3, alpha, sk) {
     gather(key = mxp_type, value = mxp_value, mxp1:mxp2)
   
   mxp_plot <- ggplot(mxp_results_long) +
-    geom_boxplot(aes(x=as.factor(curr_rho), y=mxp_value, fill=mxp_type)) +
+    geom_boxplot(aes(x = as.factor(curr_rho),
+                     y = mxp_value,
+                     fill = mxp_type)) +
     xlab("randomizing paramter") +
     ylab("mixing parameter") +
     theme_bw()
@@ -104,7 +163,7 @@ analyze_results <- function(n1, n2, n3, alpha, sk) {
               median_mxp2 = median(mxp2)) %>%
     cor(method = "kendall") # very high rank correlation between rho and median mxp
   
-  return(list(nmi_plot, mxp_plot, overall_kendall, mean_kendall, median_kendall, default_better_tbl))
+  return(list(nmi_ribbonplot, nmi_boxplot, mxp_plot, overall_kendall, mean_kendall, median_kendall, default_better_tbl))
 }
 
 res <- analyze_results(n1 = 100, n2 = 1000, n3 = 5, alpha = 2.5, sk = 3)
