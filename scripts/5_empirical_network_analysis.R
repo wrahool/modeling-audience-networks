@@ -117,8 +117,29 @@ algo_NMI <- algo_NMI %>%
   mutate(algo = as_factor(algo),
          type = as_factor(type))
 
-ggplot(data = algo_NMI, aes(y=NMI_value, x=type)) +
-  geom_bar(position="dodge", stat="identity") +
-  facet_wrap(~algo, nrow = 2) +
-  ylim(c(0,1))+
-  theme_bw()
+algos_labels <- c("WalkTrap", "Multilevel", "Fast Greedy", "Edge Betweeneness",
+                  "Infomap", "Label Propagation", "Leading Eigenvector", "Spinglass")
+
+names(algos_labels) <- algos
+
+ggplot(data = algo_NMI,
+       aes(x = as.numeric(type),
+           y = NMI_value)) +
+  geom_point(size = 3) +
+  geom_line(size = 1) +
+  geom_hline(yintercept = 0.5,
+             linetype = "dashed") +
+  ylab("Normalized Mutual Information") +
+  facet_wrap(~algo,
+             nrow = 2,
+             labeller = labeller(algo = algos_labels)) +
+  ylim(c(0,1)) +
+  theme_bw() +
+  theme(
+    strip.background = element_rect(
+      color="black", fill="black", size=1.5, linetype="solid"
+    ),
+    strip.text.x = element_text(
+      size = 12, color = "white"
+    )
+  ) 
