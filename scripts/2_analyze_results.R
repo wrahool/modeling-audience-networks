@@ -3,7 +3,10 @@ library(stringr)
 
 set.seed(108)
 
-analyze_results <- function(n1, n2, n3, alpha, sk) {
+analyze_results <- function(n1, n2, n3, sk) {
+  
+  alpha <- readline(prompt="Enter alpha: ")
+  
   nmi_file_indices <- list.files("results/") %>%
     startsWith(prefix = paste("NMI_n1", n1,
                               "n2", n2,
@@ -166,7 +169,9 @@ analyze_results <- function(n1, n2, n3, alpha, sk) {
   return(list(nmi_ribbonplot, nmi_boxplot, mxp_plot, overall_kendall, mean_kendall, median_kendall, default_better_tbl))
 }
 
-res <- analyze_results(n1 = 100, n2 = 1000, n3 = 5, alpha = 2.5, sk = 3)
+res <- analyze_results(n1 = 100, n2 = 1000, n3 = 5, sk = 3)
+
+res[[1]]
 
 # ggplot(res[[6]]) +
 #   geom_point(aes(y=default_worse_p < 0.05, x=rho)) +

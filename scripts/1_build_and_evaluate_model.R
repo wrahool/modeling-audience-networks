@@ -270,7 +270,7 @@ run_simulation <- function(n1, n2, n4, n3, pl_exp, rho, sk, N) {
   
   i <- 1
   while(i <= N) {
-    message(paste0("rho : ", rho, " Run : ", i))
+    message(paste0("alpha : ", pl_exp, " Rho : ", rho, " Run : ", i))
     
     # without debug
     test <- get_simulated_network(n1, n2, n4, n3, a, rho, sk, stop_debug = FALSE)
