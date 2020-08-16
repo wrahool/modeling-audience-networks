@@ -381,14 +381,14 @@ run_simulation <- function(n1, n2, n4, n3, pl_exp, rho, sk, N) {
     
     c_le <- tryCatch(
       # leading eigenvector uses weight by default
-      cluster_leading_eigen(g),
+      cluster_leading_eigen(g, options = list(maxiter=1000000)),
       error = function(e) {
         return(NA)
       })
     
     c_le2 <- tryCatch(
       # leading eigenvector uses E(g)$weight by default
-      cluster_leading_eigen(g_sl),
+      cluster_leading_eigen(g_sl, options = list(maxiter=1000000)),
       error = function(e) {
         return(NA)
       })
