@@ -494,7 +494,7 @@ for(r in seq(from = from_rho, to = to_rho, by = rho_inc)) {
                                             "_sk_", b,
                                             "_N_", n_simulations,
                                             "_rho_", r,"LE-corrected.csv"))
-  
+
   write_csv(simulation_results[[2]], paste0("results/MXP_n1_", n_outlets,
                                             "_n2_", n_audience,
                                             "_n3_", n_types,
