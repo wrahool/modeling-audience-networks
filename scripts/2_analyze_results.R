@@ -87,8 +87,8 @@ analyze_results <- function(n1, n2, n3, sk) {
                   y=meanNMI)) +
     geom_ribbon(aes(ymin = lower_bound,
                     ymax = upper_bound),
-                alpha=.3,
-                linetype=0) +
+                alpha = .3,
+                linetype = 0) +
     geom_hline(aes(yintercept = 0.5),
                color = "#FF0000",
                linetype = "dashed") +
