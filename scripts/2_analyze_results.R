@@ -108,7 +108,8 @@ analyze_results <- function(n1, n2, n3, sk) {
       strip.text.x = element_text(
         size = 12, color = "white"
       )
-    ) 
+    ) +
+    ggtitle(paste0("alpha = ", alpha))
   
   nmi_boxplot <- ggplot(nmi_results) +
     geom_boxplot(aes(x = as_factor(rho),
