@@ -103,7 +103,7 @@ analyze_results <- function(n1, n2, n3, sk) {
     scale_y_continuous(breaks = seq(from = 0, to = 1, by = 0.2)) +
     theme(
       strip.background = element_rect(
-        color="black", fill="black", size=1.5, linetype="solid"
+        color="gray30", fill="gray30", size=1.5, linetype="solid"
       ),
       strip.text.x = element_text(
         size = 12, color = "white"
