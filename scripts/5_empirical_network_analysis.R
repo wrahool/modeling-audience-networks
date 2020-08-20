@@ -97,7 +97,9 @@ get_NMI(media_types, LE2)
 get_NMI(media_types, SL1)
 get_NMI(media_types, SL2)
 
-algos <- c("WT", "L", "FG", "EB", "IM", "LP", "LE", "SL")
+# algos <- c("WT", "L", "FG", "EB", "IM", "LP", "LE", "SL")
+
+algos <- c("EB", "FG", "IM", "L", "LE", "LP", "SL", "WT")
 algo_types <- c(1, 2)
 
 algo_NMI <- NULL
@@ -117,19 +119,24 @@ algo_NMI <- algo_NMI %>%
   mutate(algo = as_factor(algo),
          type = as_factor(type))
 
-algos_labels <- c("WalkTrap", "Multilevel", "Fast Greedy", "Edge Betweeneness",
-                  "Infomap", "Label Propagation", "Leading Eigenvector", "Spinglass")
+# algos_labels <- c("WalkTrap", "Multilevel", "Fast Greedy", "Edge Betweeneness",
+#                   "Infomap", "Label Propagation", "Leading Eigenvector", "Spinglass")
+
+algos_labels <- c("Edge Betweenness", "Fast Greedy", "Infomap", "Multilevel",
+                  "Leading Eigenvector", "Label Propagation", "Spinglass", "WalkTrap")
 
 names(algos_labels) <- algos
 
-ggplot(data = algo_NMI,
-       aes(x = as.numeric(type),
-           y = NMI_value)) +
-  geom_point(size = 3) +
-  geom_line(size = 1) +
+e_plot <- ggplot(data = algo_NMI,
+       aes(x = type,
+           y = NMI_value,
+           group = 1)) +
+  geom_line(size = 1, linetype = "solid") +
+  geom_point(size = 3, aes(color = as_factor(type))) +
   geom_hline(yintercept = 0.5,
-             linetype = "dashed") +
-  ylab("Normalized Mutual Information") +
+             linetype = "dashed",
+             color = "red") +
+  ylab("NMI") +
   facet_wrap(~algo,
              nrow = 2,
              labeller = labeller(algo = algos_labels)) +
@@ -140,6 +147,11 @@ ggplot(data = algo_NMI,
       color="black", fill="black", size=1.5, linetype="solid"
     ),
     strip.text.x = element_text(
-      size = 12, color = "white"
-    )
+      size = 8, color = "white"
+    ),
+    # panel.grid.major.x = element_line(colour="gray90",size = rel(0.5))
+    # scale_x_continuous(breaks = seq(from=1, to=2, by = 0.5)),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    legend.position = "none"
   ) 

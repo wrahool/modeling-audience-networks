@@ -94,22 +94,27 @@ analyze_results <- function(n1, n2, n3, sk) {
                linetype = "dashed") +
     facet_wrap(~method,
                labeller = labeller(method = method_labels),
-               nrow = 4,
-               ncol = 2) +
+               nrow = 2,
+               ncol = 4) +
     xlab("randomizing parameter") +
-    ylab("normalized mutual information score") +
+    ylab("NMI") +
     theme_bw() +
-    scale_x_continuous(breaks = seq(from = 0, to = 1, by = 0.1)) +
+    scale_x_continuous(breaks = seq(from = 0, to = 1, by = 0.2)) +
     scale_y_continuous(breaks = seq(from = 0, to = 1, by = 0.2)) +
     theme(
       strip.background = element_rect(
-        color="gray30", fill="gray30", size=1.5, linetype="solid"
+        color="black", fill="black", size=1.5, linetype="solid"
       ),
       strip.text.x = element_text(
-        size = 12, color = "white"
-      )
-    ) +
-    ggtitle(paste0("alpha = ", alpha))
+        size = 8, color = "white"
+      ),
+      panel.grid.major.x = element_line(colour="gray90",size = rel(0.5)),
+      panel.grid.minor.x = element_line(colour="gray95",size = rel(0.5)),
+      panel.grid.major.y = element_line(colour="gray90",size = rel(0.5)),
+      panel.grid.minor.y = element_line(colour="gray95",size = rel(0.5)),
+      axis.text=element_text(size=7),
+      legend.position = "none"
+    )
   
   nmi_boxplot <- ggplot(nmi_results) +
     geom_boxplot(aes(x = as_factor(rho),
