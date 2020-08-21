@@ -127,6 +127,10 @@ algos_labels <- c("Edge Betweenness", "Fast Greedy", "Infomap", "Multilevel",
 
 names(algos_labels) <- algos
 
+algo_NMI <- algo_NMI %>%
+  mutate(type = ifelse(type == 1, "Baseline", "Augmented")) %>%
+  mutate(type = factor(type, levels = c("Baseline", "Augmented")))
+
 e_plot <- ggplot(data = algo_NMI,
        aes(x = type,
            y = NMI_value,
