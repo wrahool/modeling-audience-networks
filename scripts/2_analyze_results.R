@@ -96,7 +96,7 @@ analyze_results <- function(n1, n2, n3, sk) {
                labeller = labeller(method = method_labels),
                nrow = 2,
                ncol = 4) +
-    xlab("randomizing parameter") +
+    xlab(expression(rho)) +
     ylab("NMI") +
     theme_bw() +
     scale_x_continuous(breaks = seq(from = 0, to = 1, by = 0.2)) +

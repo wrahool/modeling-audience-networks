@@ -141,6 +141,7 @@ e_plot <- ggplot(data = algo_NMI,
              linetype = "dashed",
              color = "red") +
   ylab("NMI") +
+  xlab("Network type") +
   facet_wrap(~algo,
              nrow = 2,
              labeller = labeller(algo = algos_labels)) +
@@ -157,5 +158,6 @@ e_plot <- ggplot(data = algo_NMI,
     # scale_x_continuous(breaks = seq(from=1, to=2, by = 0.5)),
     panel.grid.major.x = element_blank(),
     panel.grid.minor.x = element_blank(),
-    legend.position = "none"
+    legend.position = "none",
+    text = element_text(size=8)
   ) 
