@@ -152,7 +152,7 @@ e_plot <- ggplot(data = algo_NMI,
       color="black", fill="black", size=1.5, linetype="solid"
     ),
     strip.text.x = element_text(
-      size = 8, color = "white"
+      size = 10, color = "white"
     ),
     # panel.grid.major.x = element_line(colour="gray90",size = rel(0.5))
     # scale_x_continuous(breaks = seq(from=1, to=2, by = 0.5)),
