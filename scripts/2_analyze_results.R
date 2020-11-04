@@ -179,6 +179,8 @@ res <- analyze_results(n1 = 100, n2 = 1000, n3 = 5, sk = 3)
 
 res[[1]]
 
+ggsave("synthetic_networks_ICA_sk3.eps", device = cairo_ps, fallback_resolution = 600)
+
 # ggplot(res[[6]]) +
 #   geom_point(aes(y=default_worse_p < 0.05, x=rho)) +
 #   facet_wrap(.~method, nrow = 4) +
