@@ -175,7 +175,7 @@ analyze_results <- function(n1, n2, n3, sk) {
   return(list(nmi_ribbonplot, nmi_boxplot, mxp_plot, overall_kendall, mean_kendall, median_kendall, default_better_tbl))
 }
 
-res <- analyze_results(n1 = 100, n2 = 1000, n3 = 5, sk = 3)
+res <- analyze_results(n1 = 100, n2 = 1000, n3 = 5, sk = 4)
 
 res[[1]]
 
