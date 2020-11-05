@@ -68,7 +68,9 @@ analyze_results <- function(n1, n2, n3, sk) {
     mutate(type = str_sub(method, -1)) %>%
     mutate(type = as_factor(ifelse(type %in% letters, 1, 2))) %>%
     mutate(method = gsub("2", "", method)) %>%
-    select(method, type, rho, lower_bound, meanNMI, upper_bound)
+    mutate(type = ifelse(type == 1, "baseline", "augmented")) %>%
+    rename(network = type) %>%
+    select(method, network, rho, lower_bound, meanNMI, upper_bound)
   
   method <- nmi_mean_sd %>%
     pull(method) %>%
@@ -79,10 +81,12 @@ analyze_results <- function(n1, n2, n3, sk) {
   
   names(method_labels) <- method
   
+  print(nmi_mean_sd)
+  
   nmi_ribbonplot <- ggplot(nmi_mean_sd,
          aes(x = rho,
-             color = type,
-             fill = type)) +
+             color = network,
+             fill = network)) +
     geom_line(aes(x=rho,
                   y=meanNMI)) +
     geom_ribbon(aes(ymin = lower_bound,
@@ -106,14 +110,14 @@ analyze_results <- function(n1, n2, n3, sk) {
         color="black", fill="black", size=1.5, linetype="solid"
       ),
       strip.text.x = element_text(
-        size = 8, color = "white"
+        size = 12, color = "white"
       ),
       panel.grid.major.x = element_line(colour="gray90",size = rel(0.5)),
       panel.grid.minor.x = element_line(colour="gray95",size = rel(0.5)),
       panel.grid.major.y = element_line(colour="gray90",size = rel(0.5)),
       panel.grid.minor.y = element_line(colour="gray95",size = rel(0.5)),
       axis.text=element_text(size=7),
-      legend.position = "none"
+      legend.position = "bottom"
     )
   
   nmi_boxplot <- ggplot(nmi_results) +
@@ -175,11 +179,11 @@ analyze_results <- function(n1, n2, n3, sk) {
   return(list(nmi_ribbonplot, nmi_boxplot, mxp_plot, overall_kendall, mean_kendall, median_kendall, default_better_tbl))
 }
 
-res <- analyze_results(n1 = 100, n2 = 1000, n3 = 5, sk = 4)
+res <- analyze_results(n1 = 100, n2 = 1000, n3 = 5, sk = 3)
 
 res[[1]]
 
-ggsave("synthetic_networks_ICA_sk3.eps", device = cairo_ps, fallback_resolution = 600)
+ggsave("plots/synthetic_networks_ICA_sk3.eps", device = cairo_ps, fallback_resolution = 600)
 
 # ggplot(res[[6]]) +
 #   geom_point(aes(y=default_worse_p < 0.05, x=rho)) +
