@@ -224,6 +224,17 @@ get_prediction_accuracy <- function(c, outlet_types) {
 # function to calculate the NMI for community structure c
 get_NMI <- function(c, outlet_types) {
   
+  # a warning message here such as
+  # Warning message:
+  # In if (!is.na(c)) { :
+  #    the condition has length > 1 and only the first element will be used
+  # is perfectly fine, by design.
+  # if there is an error in community detection, the value defaults to NA
+  # which this if condition catches.
+  # if the community detection works, then it returns a list of things, none of
+  # which are NA.
+
+  
   if(!is.na(c)) {
     confusion_tbl <- outlet_types %>%
       merge(tibble(
@@ -264,7 +275,7 @@ get_mixing_parameter <- function(ig, outlet_types) {
   return(c)
 }
 
-run_simulation <- function(n1, n2, n4, n3, pl_exp, rho, sk, N) {
+run_simulation <- function(n1, n2, n4, n3, pl_exp, rho, sk, N, use_optimal = FALSE) {
   res_tbl <- NULL
   rho_mxps <- NULL
   
@@ -405,29 +416,68 @@ run_simulation <- function(n1, n2, n4, n3, pl_exp, rho, sk, N) {
       cluster_spinglass(g_sl),
       error = function(e) {
         return(NA)
-      }
-    )
+      })
     
-    all_cs <- list(c_wt, c_wt2,
-                   c_l, c_l2,
-                   c_fg, c_fg2,
-                   c_eb, c_eb2,
-                   c_im, c_im2,
-                   c_lp, c_lp2,
-                   c_le, c_le2,
-                   c_sl, c_sl2
-    )
-    
-    cd_used <- c(
-      "wt", "wt2",
-      "l", "l2",
-      "fg", "fg2",
-      "eb", "eb2",
-      "im", "im2",
-      "lp", "lp2",
-      "le", "le2",
-      "sl", "sl2"
-    )
+    if (use_optimal) {
+      c_op <- tryCatch(
+        # for optimal, by default weights = NULL and that uses the E(g)$weight attribute
+        cluster_optimal(g),
+        error = function(e) {
+          return(NA)
+        })
+      
+      c_op2 <- tryCatch(
+        # for optimal, by default weights = NULL and that uses the E(g)$weight attribute
+        cluster_optimal(g_sl),
+        error = function(e) {
+          return(NA)
+        })
+      
+      all_cs <- list(c_wt, c_wt2,
+                     c_l, c_l2,
+                     c_fg, c_fg2,
+                     c_eb, c_eb2,
+                     c_im, c_im2,
+                     c_lp, c_lp2,
+                     c_le, c_le2,
+                     c_sl, c_sl2,
+                     c_op, c_op2
+      )
+      
+      cd_used <- c(
+        "wt", "wt2",
+        "l", "l2",
+        "fg", "fg2",
+        "eb", "eb2",
+        "im", "im2",
+        "lp", "lp2",
+        "le", "le2",
+        "sl", "sl2",
+        "op", "op2"
+      )
+    } else { # without cluster_optimal
+      
+      all_cs <- list(c_wt, c_wt2,
+                     c_l, c_l2,
+                     c_fg, c_fg2,
+                     c_eb, c_eb2,
+                     c_im, c_im2,
+                     c_lp, c_lp2,
+                     c_le, c_le2,
+                     c_sl, c_sl2
+      )
+      
+      cd_used <- c(
+        "wt", "wt2",
+        "l", "l2",
+        "fg", "fg2",
+        "eb", "eb2",
+        "im", "im2",
+        "lp", "lp2",
+        "le", "le2",
+        "sl", "sl2"
+      )
+    }
     
     NMI_scores <- sapply(all_cs, FUN = function(x) {
       get_NMI(x, o_tbl)
@@ -474,6 +524,9 @@ rho_inc <- model_params$rho_inc
 a = model_params$a
 b = model_params$b
 
+use_opt <- readline(prompt="Include cluster_optimal? Enter 1 for YES, 0 for NO: ")
+use_opt <- as.logical(as.numeric(use_opt))
+
 for(r in seq(from = from_rho, to = to_rho, by = rho_inc)) {
   
   # set the same seed for a specific rho so that errors within each rho can be easily replicated
@@ -485,7 +538,8 @@ for(r in seq(from = from_rho, to = to_rho, by = rho_inc)) {
                                        pl_exp = a,
                                        rho = r,
                                        sk = b,
-                                       N = n_simulations)
+                                       N = n_simulations,
+                                       use_optimal = use_opt)
   
   write_csv(simulation_results[[1]], paste0("results/NMI_n1_", n_outlets,
                                             "_n2_", n_audience,
@@ -493,7 +547,8 @@ for(r in seq(from = from_rho, to = to_rho, by = rho_inc)) {
                                             "_alpha_", a,
                                             "_sk_", b,
                                             "_N_", n_simulations,
-                                            "_rho_", r,"LE-corrected.csv"))
+                                            "_rho_", r,
+                                            "_optimal_", use_opt, ".csv"))
 
   write_csv(simulation_results[[2]], paste0("results/MXP_n1_", n_outlets,
                                             "_n2_", n_audience,
@@ -501,5 +556,6 @@ for(r in seq(from = from_rho, to = to_rho, by = rho_inc)) {
                                             "_alpha_", a,
                                             "_sk_", b,
                                             "_N_", n_simulations,
-                                            "_rho_", r,"LE-corrected.csv"))
+                                            "_rho_", r,
+                                            "_optimal_", use_opt, ".csv"))
 }
