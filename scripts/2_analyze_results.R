@@ -3,7 +3,7 @@ library(stringr)
 
 set.seed(108)
 
-analyze_results <- function(n1, n2, n3, sk) {
+analyze_results <- function(n1, n2, n3, sk, opt) {
   
   alpha <- readline(prompt="Enter alpha: ")
   
@@ -12,7 +12,8 @@ analyze_results <- function(n1, n2, n3, sk) {
                               "n2", n2,
                               "n3", n3,
                               "alpha", alpha,
-                              "sk", sk, sep = "_"))
+                              "sk", sk, 
+                              "optimal", opt, sep = "_"))
   
   nmi_files <- list.files("results/")[nmi_file_indices]
   
@@ -77,7 +78,7 @@ analyze_results <- function(n1, n2, n3, sk) {
     unique()
   
   method_labels <- c("Edge Betweeneness", "Fast Greedy", "Infomap","Multilevel", 
-                    "Leading Eigenvector", "Label Propagation","Spinglass", "WalkTrap")
+                    "Leading Eigenvector", "Label Propagation","Spin-Glass", "WalkTrap")
   
   names(method_labels) <- method
   
@@ -179,11 +180,11 @@ analyze_results <- function(n1, n2, n3, sk) {
   return(list(nmi_ribbonplot, nmi_boxplot, mxp_plot, overall_kendall, mean_kendall, median_kendall, default_better_tbl))
 }
 
-res <- analyze_results(n1 = 100, n2 = 1000, n3 = 5, sk = 3)
+res <- analyze_results(n1 = 100, n2 = 1000, n3 = 5, sk = 3, opt = FALSE)
 
 res[[1]]
 
-ggsave("plots/synthetic_networks_ICA_sk3.eps", device = cairo_ps, fallback_resolution = 600)
+# ggsave("plots/synthetic_networks_sk3.eps", device = cairo_ps, fallback_resolution = 600)
 
 # ggplot(res[[6]]) +
 #   geom_point(aes(y=default_worse_p < 0.05, x=rho)) +
