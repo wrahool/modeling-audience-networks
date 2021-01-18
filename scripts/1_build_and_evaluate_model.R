@@ -546,9 +546,9 @@ for(r in seq(from = from_rho, to = to_rho, by = rho_inc)) {
                                             "_n3_", n_types,
                                             "_alpha_", a,
                                             "_sk_", b,
+                                            "_optimal_", use_opt,
                                             "_N_", n_simulations,
-                                            "_rho_", r,
-                                            "_optimal_", use_opt, ".csv"))
+                                            "_rho_", r, ".csv"))
 
   write_csv(simulation_results[[2]], paste0("results/MXP_n1_", n_outlets,
                                             "_n2_", n_audience,
