@@ -222,7 +222,7 @@ get_prediction_accuracy <- function(c, outlet_types) {
 }
 
 # function to calculate the NMI for community structure c
-get_NMI <- function(c, outlet_types) {
+get_NMI <- function(c, outlet_types, v) {
   
   # a warning message here such as
   # Warning message:
@@ -243,7 +243,7 @@ get_NMI <- function(c, outlet_types) {
       ))
     
     NMI_score <- NMI(confusion_tbl$outlet_type,
-                     confusion_tbl$pred_type)
+                     confusion_tbl$pred_type, variant = v)
   } else
     NMI_score <- NA
   
@@ -275,7 +275,7 @@ get_mixing_parameter <- function(ig, outlet_types) {
   return(c)
 }
 
-run_simulation <- function(n1, n2, n4, n3, pl_exp, rho, sk, N, use_optimal = FALSE) {
+run_simulation <- function(n1, n2, n4, n3, pl_exp, rho, sk, N, use_optimal = FALSE, all_NMI = FALSE) {
   res_tbl <- NULL
   rho_mxps <- NULL
   
@@ -479,23 +479,58 @@ run_simulation <- function(n1, n2, n4, n3, pl_exp, rho, sk, N, use_optimal = FAL
       )
     }
     
-    NMI_scores <- sapply(all_cs, FUN = function(x) {
-      get_NMI(x, o_tbl)
-    })
+    if(!all_NMI) { # only use max NMI
+      NMI_scores <- sapply(all_cs, FUN = function(x) {
+        get_NMI(x, o_tbl, "max")
+      })
+      
+      res_tbl <- tibble(
+        run = i,
+        rho = rho,
+        method = cd_used,
+        NMI_scores = NMI_scores
+      ) %>%
+        rbind(res_tbl)
+      
+    } else { # calculate all NMI values
+      NMI_scores_max <- sapply(all_cs, FUN = function(x) {
+        get_NMI(x, o_tbl, "max")
+      })
+      
+      NMI_scores_min <- sapply(all_cs, FUN = function(x) {
+        get_NMI(x, o_tbl, "min")
+      })
+      
+      NMI_scores_sqrt <- sapply(all_cs, FUN = function(x) {
+        get_NMI(x, o_tbl, "sqrt")
+      })
+      
+      NMI_scores_sum <- sapply(all_cs, FUN = function(x) {
+        get_NMI(x, o_tbl, "sum")
+      })
+      
+      NMI_scores_joint <- sapply(all_cs, FUN = function(x) {
+        get_NMI(x, o_tbl, "joint")
+      })
+      
+      res_tbl <- tibble(
+        run = i,
+        rho = rho,
+        method = cd_used,
+        NMI_scores_max = NMI_scores_max,
+        NMI_scores_min = NMI_scores_min,
+        NMI_scores_sqrt = NMI_scores_sqrt,
+        NMI_scores_sum = NMI_scores_sum,
+        NMI_scores_joint = NMI_scores_joint,
+      ) %>%
+        rbind(res_tbl)
+    }
     
     # how to identify which simulation you need to investigate
     # if(NMI_scores[1] != 1) {
     #   print(i)
     #   print(length(cluster_walktrap(g)))
     # }
-    
-    res_tbl <- tibble(
-      run = i,
-      rho = rho,
-      method = cd_used,
-      NMI_scores = NMI_scores
-    ) %>%
-      rbind(res_tbl)
     
     i <- i+1
   }
@@ -527,6 +562,9 @@ b = model_params$b
 use_opt <- readline(prompt="Include cluster_optimal? Enter 1 for YES, 0 for NO: ")
 use_opt <- as.logical(as.numeric(use_opt))
 
+all_nmi <- readline(prompt="Calculate all NMI? Enter 1 for YES, 0 for NO: ")
+all_nmi <- as.logical(as.numeric(all_nmi))
+
 for(r in seq(from = from_rho, to = to_rho, by = rho_inc)) {
   
   # set the same seed for a specific rho so that errors within each rho can be easily replicated
@@ -539,7 +577,8 @@ for(r in seq(from = from_rho, to = to_rho, by = rho_inc)) {
                                        rho = r,
                                        sk = b,
                                        N = n_simulations,
-                                       use_optimal = use_opt)
+                                       use_optimal = use_opt,
+                                       all_NMI = all_nmi)
   
   write_csv(simulation_results[[1]], paste0("results/NMI_n1_", n_outlets,
                                             "_n2_", n_audience,
@@ -547,6 +586,7 @@ for(r in seq(from = from_rho, to = to_rho, by = rho_inc)) {
                                             "_alpha_", a,
                                             "_sk_", b,
                                             "_optimal_", use_opt,
+                                            "_allNMI_", all_nmi,
                                             "_N_", n_simulations,
                                             "_rho_", r, ".csv"))
 
@@ -555,7 +595,8 @@ for(r in seq(from = from_rho, to = to_rho, by = rho_inc)) {
                                             "_n3_", n_types,
                                             "_alpha_", a,
                                             "_sk_", b,
-                                            "_optimal_", use_opt, 
+                                            "_optimal_", use_opt,
+                                            "_allNMI_", all_nmi,
                                             "_N_", n_simulations,
                                             "_rho_", r, ".csv"))
 }
