@@ -3,10 +3,9 @@ library(stringr)
 
 set.seed(108)
 
-analyze_results <- function(n1, n2, n3, sk, alpha, opt, allNMI, N) {
+analyze_results <- function(n1, n2, n3, sk, alpha, opt) {
   
-  # alpha <- readline(prompt="Enter alpha: ")
-  # NMItype <- tolower(readline(prompt="Enter NMI type (max/min/sqrt/sum/joint): "))
+  NMItype <- tolower(readline(prompt="Enter NMI type (max/min/sqrt/sum/joint): "))
   
   nmi_file_indices <- list.files("results/") %>%
     startsWith(prefix = paste("NMI_n1", n1,
@@ -15,8 +14,7 @@ analyze_results <- function(n1, n2, n3, sk, alpha, opt, allNMI, N) {
                               "alpha", alpha,
                               "sk", sk, 
                               "optimal", opt,
-                              "allNMI", allNMI, 
-                              "N", N, sep = "_"))
+                              "allNMI", "TRUE", sep = "_"))
   
   nmi_files <- list.files("results/")[nmi_file_indices]
   
@@ -29,14 +27,10 @@ analyze_results <- function(n1, n2, n3, sk, alpha, opt, allNMI, N) {
   
   methods <- unique(gsub(pattern = "2", "", unique(nmi_results$method)))
   
-  # which NMI score to use?
-  # metric_to_use <- "NMI_scores" # default
-  metric_to_use <- "SNMI_scores"
-  
   nmi_results <- nmi_results %>%
-    select(run, rho, method, metric_to_use) %>%
+    select(run, rho, method, paste("NMI_scores", NMItype, sep = "_")) %>%
     rename("NMI_scores" = 4)
-  
+    
   default_better_tbl <- NULL
   for(r in unique(nmi_results$rho)) {
     for(m in methods) {
@@ -50,15 +44,15 @@ analyze_results <- function(n1, n2, n3, sk, alpha, opt, allNMI, N) {
       
       rho_m_nmi_results_wide <- rho_m_nmi_results %>%
         spread(key = method, value = NMI_scores)
-    
+      
       wilcox_result_p <- tryCatch(
         wilcox.test(rho_m_nmi_results_wide[[m]],
                     rho_m_nmi_results_wide[[paste0(m, 2)]],
                     paired = TRUE, alternative = "l")$p.value,
         error = function(e) {
           return(NA)
-      })
-    
+        })
+      
       # wilcox_result_p <- wilcox_result$p.value
       
       default_better_tbl <- default_better_tbl %>%
@@ -89,16 +83,16 @@ analyze_results <- function(n1, n2, n3, sk, alpha, opt, allNMI, N) {
     unique()
   
   method_labels <- c("Edge Betweeneness", "Fast Greedy", "Infomap","Multilevel", 
-                    "Leading Eigenvector", "Label Propagation","Spin-Glass", "WalkTrap")
+                     "Leading Eigenvector", "Label Propagation","Spin-Glass", "WalkTrap")
   
   names(method_labels) <- method
   
   print(nmi_mean_sd)
   
   nmi_ribbonplot <- ggplot(nmi_mean_sd,
-         aes(x = rho,
-             color = network,
-             fill = network)) +
+                           aes(x = rho,
+                               color = network,
+                               fill = network)) +
     geom_line(aes(x=rho,
                   y=meanNMI)) +
     geom_ribbon(aes(ymin = lower_bound,
@@ -172,7 +166,7 @@ analyze_results <- function(n1, n2, n3, sk, alpha, opt, allNMI, N) {
     theme_bw()
   
   overall_kendall <- cor.test(mxp_results$curr_rho,
-           mxp_results$mxp1, method = "kendall")
+                              mxp_results$mxp1, method = "kendall")
   
   mean_kendall <- mxp_results %>%
     group_by(curr_rho) %>%
@@ -191,7 +185,7 @@ analyze_results <- function(n1, n2, n3, sk, alpha, opt, allNMI, N) {
   return(list(nmi_ribbonplot, nmi_boxplot, mxp_plot, overall_kendall, mean_kendall, median_kendall, default_better_tbl))
 }
 
-res <- analyze_results(n1 = 100, n2 = 1000, n3 = 5, sk = 3, alpha = 3, allNMI = TRUE, N = 5, opt = FALSE)
+res <- analyze_results(n1 = 100, n2 = 1000, n3 = 5, sk = 3, alpha = 3, opt = FALSE)
 
 res[[1]]
 

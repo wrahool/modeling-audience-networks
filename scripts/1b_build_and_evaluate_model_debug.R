@@ -40,7 +40,7 @@ sample_atleast_once <- function(x, n){
 
 
 get_simulated_network <- function(n1, n2, n3, a, rho, sk, stop_debug = FALSE) {
-  
+
   outlet_ids <- 1:n1
   p_ids <- 1:n2
   types <- LETTERS[1:n3]
@@ -67,10 +67,16 @@ get_simulated_network <- function(n1, n2, n3, a, rho, sk, stop_debug = FALSE) {
     p_id = p_ids,
     p_name = paste("P", p_ids, sep = ""),
     p_type = sample_atleast_once(types, n2),       # at least one audience member of each type
+    # p_n4 = sample(1:n1, n2, replace = TRUE)
     p_n4 = all_n4_scaled
   )
   
   audience_el <- NULL
+  
+  # if(stop_debug) {
+  #   View(outlets_tbl)
+  #   View(audience_tbl)
+  # }
   
   # loop over each person
   for(p in 1:n2) {
@@ -99,6 +105,24 @@ get_simulated_network <- function(n1, n2, n3, a, rho, sk, stop_debug = FALSE) {
       pull(outlet_id) %>%                                           # all outlets in the selective outlets pool
       sample(selective_choices_allowed, replace = TRUE,             # randomly sample with prob = outlet repute (R auto-normalizes the probabilities of the subset)
              prob = selective_outlets_pool$outlet_repute)
+    
+    
+    # uncomment if you want to debug any specific iteratuib
+    # 
+    #     if (stop_debug) {
+    #       print("Person Number:")
+    #       print(p)
+    #       print("Visisted # of websites:")
+    #       print(n4)
+    #       print("These are the websites:")
+    #       print(selective_chosen_outlets)
+    #       print("----------------------------------------")
+    #       
+    #       fileConn<-file("output.txt")
+    #       writeLines(c(p," : ", n4, " : ", selective_chosen_outlets), fileConn)
+    #       close(fileConn)
+    # 
+    #     }
     
     random_chosen_outlets <- outlets_tbl %>%                        # from
       pull(outlet_id) %>%                                           # all outlets in the universe
@@ -155,8 +179,51 @@ get_simulated_network <- function(n1, n2, n3, a, rho, sk, stop_debug = FALSE) {
       pull(uv)
   }
   
+  # if(stop_debug) {
+  #   plot(outlet_projection)
+  # }
+  
   return(list(outlet_projection, outlet_projection_sl, outlets_tbl))
 }
+
+################################################################
+# no longer using this, keeping this for legacy's sake
+# function to calculate mode
+# mode <- function(v) {
+#   uniqv <- unique(v)
+#   uniqv[which.max(tabulate(match(v, uniqv)))]
+# }
+
+################################################################
+# no longer using this prediction accuracy function. Keeping it for legacy's sake
+# assign, to outlets in each cluster, the modal type as its predicted type
+# get_prediction_accuracy <- function(c, outlet_types) {
+#   
+#   pred_tbl <- NULL
+#   for(i in 1:length(c)) {
+#     
+#     predicted_type_i <- outlet_types %>%
+#       dplyr::filter(outlet_name %in% c[[i]]) %>%
+#       pull(outlet_type) %>%
+#       mode() %>%
+#       rep(length(c[[i]]))
+#     
+#     pred_tbl <- tibble(
+#       outlet_name = c[[i]],
+#       pred_type = predicted_type_i
+#     ) %>%
+#       rbind(pred_tbl)
+#   }
+#   
+#   pred_tbl <- outlet_types %>%
+#     merge(pred_tbl)
+#   
+#   pred_tbl %>%
+#     dplyr::filter(outlet_type == pred_type) %>%
+#     nrow %>%
+#     `/` (nrow(pred_tbl))
+#   
+# }
 
 # function to calculate the NMI for community structure c
 get_NMI <- function(c, outlet_types, v) {
@@ -199,6 +266,7 @@ get_AMI <- function(c, outlet_types) {
   # which this if condition catches.
   # if the community detection works, then it returns a list of things, none of
   # which are NA.
+  print("get AMI")
   
   if(!is.na(c)) {
     confusion_tbl <- outlet_types %>%
@@ -229,7 +297,7 @@ get_SNMI <- function(c, outlet_types) {
   # which this if condition catches.
   # if the community detection works, then it returns a list of things, none of
   # which are NA.
-  
+
   
   if(!is.na(c)) {
     confusion_tbl <- outlet_types %>%
@@ -249,30 +317,71 @@ get_SNMI <- function(c, outlet_types) {
     
   } else
     SNMI_score <- NA
-  
+
   return(SNMI_score)
   
 }
 
+# no longer using mixing parameter. Keeping the code for legacy's sake.
+# function to calculate the input mixing parameter of a graph ig,
+# using outlet_types
+
+# get_mixing_parameter <- function(ig, outlet_types) {
+#   
+#   edge_ends <- data.frame(ends(ig, E(ig))) %>% 
+#     as_tibble()
+#   
+#   o_tbl <- outlet_types %>%
+#     select(outlet_name, outlet_type)
+#   
+#   c <- edge_ends %>%
+#     inner_join(o_tbl, by = c("X1" = "outlet_name")) %>%
+#     rename("X1_type" = "outlet_type") %>%
+#     inner_join(o_tbl, by = c("X2" = "outlet_name")) %>%
+#     rename("X2_type" = "outlet_type") %>%
+#     mutate(edgetype = ifelse(X1_type == X2_type, "in", "out")) %>%
+#     dplyr::filter(edgetype == "out") %>%
+#     nrow() %>%
+#     `/` (nrow(edge_ends))
+#   
+#   return(c)
+# }
+
 run_simulation <- function(n1, n2, n4, n3, pl_exp, rho, sk, N, use_optimal = FALSE, all_NMI = FALSE) {
-  
   res_tbl <- NULL
+  
+  # rho_mxps <- NULL
   
   i <- 1
   while(i <= N) {
-    message(paste0("alpha : ", pl_exp, " skew : ", sk, " rho : ", rho, " run : ", i))
+    message(paste0("alpha : ", pl_exp, " Skew : ", sk, " Rho : ", rho, " Run : ", i))
     
+    # without debug
     test <- get_simulated_network(n1, n2, n3, a, rho, sk, stop_debug = FALSE)
+    
+    # the next line is if you need to debug at a particular iteration (value of i)
+    # test <- get_simulated_network(n1, n2, n4, n3, a, rho, sk, stop_debug = ifelse(i == 61, TRUE, FALSE))
     
     g <- test[[1]]
     g_sl <- test[[2]]
     o_tbl <- test[[3]]
     
+    # save(g, file = paste("networks/", n1, n2, n3, a, sk, rho, ".Rdata", sep = "_"))
     
     if(length(V(g)) <= 1) {
       message("Rerun...")
       next
     }
+    
+    # save(list(g, g_sl, o_tbl), file = paste0("network_data/mixing_parameter_rdata/rho_", rho, "_", n1, "_", n2, "_", i, ".RData"))
+    
+    # no longer using mixing parameters. Keeping the code for legacy's sake
+    # rho_mxps <- tibble(
+    #   curr_rho = rho,
+    #   mxp1 = get_mixing_parameter(g, o_tbl),
+    #   mxp2 = get_mixing_parameter(g_sl, o_tbl)
+    # ) %>%
+    #   rbind(rho_mxps)
     
     c_wt <- tryCatch(
       # cluster_walktrap uses E(g)$weight by default
@@ -504,9 +613,16 @@ run_simulation <- function(n1, n2, n4, n3, pl_exp, rho, sk, N, use_optimal = FAL
         rbind(res_tbl)
     }
     
+    # how to identify which simulation you need to investigate
+    # if(NMI_scores[1] != 1) {
+    #   print(i)
+    #   print(length(cluster_walktrap(g)))
+    # }
+    
     i <- i+1
   }
   
+  # return(list(res_tbl, rho_mxps))
   return(res_tbl)
 }
 
@@ -553,13 +669,22 @@ for(r in seq(from = from_rho, to = to_rho, by = rho_inc)) {
                                        all_NMI = all_nmi)
   
   write_csv(simulation_results, paste0("results/NMI_n1_", n_outlets,
-                                       "_n2_", n_audience,
-                                       "_n3_", n_types,
-                                       "_alpha_", a,
-                                       "_sk_", b,
-                                       "_optimal_", use_opt,
-                                       "_allNMI_", all_nmi,
-                                       "_N_", n_simulations,
-                                       "_rho_", r, ".csv"))
-  
+                                            "_n2_", n_audience,
+                                            "_n3_", n_types,
+                                            "_alpha_", a,
+                                            "_sk_", b,
+                                            "_optimal_", use_opt,
+                                            "_allNMI_", all_nmi,
+                                            "_N_", n_simulations,
+                                            "_rho_", r, ".csv"))
+
+  # write_csv(simulation_results[[2]], paste0("results/MXP_n1_", n_outlets,
+  #                                           "_n2_", n_audience,
+  #                                           "_n3_", n_types,
+  #                                           "_alpha_", a,
+  #                                           "_sk_", b,
+  #                                           "_optimal_", use_opt,
+  #                                           "_allNMI_", all_nmi,
+  #                                           "_N_", n_simulations,
+  #                                           "_rho_", r, ".csv"))
 }
