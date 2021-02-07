@@ -3,7 +3,7 @@ library(stringr)
 
 set.seed(108)
 
-analyze_results <- function(n1, n2, n3, sk, alpha, opt, allNMI, N, metric_to_use) {
+analyze_results <- function(n1, n2, n3, sk, alpha, opt, allNMI, N) {
   
   # alpha <- readline(prompt="Enter alpha: ")
   # NMItype <- tolower(readline(prompt="Enter NMI type (max/min/sqrt/sum/joint): "))
@@ -31,6 +31,7 @@ analyze_results <- function(n1, n2, n3, sk, alpha, opt, allNMI, N, metric_to_use
   
   # which NMI score to use?
   # metric_to_use <- "NMI_scores" # default
+  metric_to_use <- "AMI_scores"
   
   nmi_results <- nmi_results %>%
     select(run, rho, method, metric_to_use) %>%
@@ -49,15 +50,15 @@ analyze_results <- function(n1, n2, n3, sk, alpha, opt, allNMI, N, metric_to_use
       
       rho_m_nmi_results_wide <- rho_m_nmi_results %>%
         spread(key = method, value = NMI_scores)
-      
+    
       wilcox_result_p <- tryCatch(
         wilcox.test(rho_m_nmi_results_wide[[m]],
                     rho_m_nmi_results_wide[[paste0(m, 2)]],
                     paired = TRUE, alternative = "l")$p.value,
         error = function(e) {
           return(NA)
-        })
-      
+      })
+    
       # wilcox_result_p <- wilcox_result$p.value
       
       default_better_tbl <- default_better_tbl %>%
@@ -88,16 +89,16 @@ analyze_results <- function(n1, n2, n3, sk, alpha, opt, allNMI, N, metric_to_use
     unique()
   
   method_labels <- c("Edge Betweeneness", "Fast Greedy", "Infomap","Multilevel", 
-                     "Leading Eigenvector", "Label Propagation","Spin-Glass", "WalkTrap")
+                    "Leading Eigenvector", "Label Propagation","Spin-Glass", "WalkTrap")
   
   names(method_labels) <- method
   
   print(nmi_mean_sd)
   
   nmi_ribbonplot <- ggplot(nmi_mean_sd,
-                           aes(x = rho,
-                               color = network,
-                               fill = network)) +
+         aes(x = rho,
+             color = network,
+             fill = network)) +
     geom_line(aes(x=rho,
                   y=meanNMI)) +
     geom_ribbon(aes(ymin = lower_bound,
@@ -143,10 +144,54 @@ analyze_results <- function(n1, n2, n3, sk, alpha, opt, allNMI, N, metric_to_use
     ylab("normalized mutual information score") +
     theme_bw()
   
-  return(list(nmi_ribbonplot, nmi_boxplot, default_better_tbl))
+  mxp_file_indices <- list.files("results/") %>%
+    startsWith(prefix = paste("MXP_n1", n1,
+                              "n2", n2,
+                              "n3", n3,
+                              "alpha", alpha,
+                              "sk", sk, sep = "_"))
+  
+  mxp_files <- list.files("results/")[mxp_file_indices]
+  
+  mxp_results <- NULL
+  for(file in mxp_files) {
+    mxp_result <- read_csv(paste0("results/", file))
+    mxp_results <- mxp_results %>%
+      rbind(mxp_result)
+  }
+  
+  mxp_results_long <- mxp_results %>%
+    gather(key = mxp_type, value = mxp_value, mxp1:mxp2)
+  
+  mxp_plot <- ggplot(mxp_results_long) +
+    geom_boxplot(aes(x = as.factor(curr_rho),
+                     y = mxp_value,
+                     fill = mxp_type)) +
+    xlab("randomizing paramter") +
+    ylab("mixing parameter") +
+    theme_bw()
+  
+  overall_kendall <- cor.test(mxp_results$curr_rho,
+           mxp_results$mxp1, method = "kendall")
+  
+  mean_kendall <- mxp_results %>%
+    group_by(curr_rho) %>%
+    rename(rho = curr_rho) %>%
+    summarize(mean_mxp1 = mean(mxp1),
+              mean_mxp2 = mean(mxp2)) %>%
+    cor(method = "kendall") # very high rank correlation between rho and mean mxp
+  
+  median_kendall <- mxp_results %>%
+    group_by(curr_rho) %>%
+    rename(rho = curr_rho) %>%
+    summarize(median_mxp1 = median(mxp1),
+              median_mxp2 = median(mxp2)) %>%
+    cor(method = "kendall") # very high rank correlation between rho and median mxp
+  
+  return(list(nmi_ribbonplot, nmi_boxplot, mxp_plot, overall_kendall, mean_kendall, median_kendall, default_better_tbl))
 }
 
-res <- analyze_results(n1 = 100, n2 = 1000, n3 = 5, sk = 3, alpha = 3, allNMI = TRUE, N = 100, opt = FALSE, metric_to_use = "SNMI_scores")
+res <- analyze_results(n1 = 100, n2 = 1000, n3 = 5, sk = 3, alpha = 3, allNMI = TRUE, N = 100, opt = FALSE)
 
 res[[1]]
 
