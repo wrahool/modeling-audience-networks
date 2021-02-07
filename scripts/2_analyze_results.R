@@ -5,9 +5,6 @@ set.seed(108)
 
 analyze_results <- function(n1, n2, n3, sk, alpha, opt, allNMI, N) {
   
-  # alpha <- readline(prompt="Enter alpha: ")
-  # NMItype <- tolower(readline(prompt="Enter NMI type (max/min/sqrt/sum/joint): "))
-  
   nmi_file_indices <- list.files("results/") %>%
     startsWith(prefix = paste("NMI_n1", n1,
                               "n2", n2,
@@ -28,9 +25,6 @@ analyze_results <- function(n1, n2, n3, sk, alpha, opt, allNMI, N) {
   }
   
   methods <- unique(gsub(pattern = "2", "", unique(nmi_results$method)))
-  
-  # which NMI score to use?
-  # metric_to_use <- "NMI_scores" # default
   
   message("The following metrics are available for this set of parameters:")
   
@@ -59,10 +53,6 @@ analyze_results <- function(n1, n2, n3, sk, alpha, opt, allNMI, N) {
       rho_m_nmi_results <- nmi_results %>%
         dplyr::filter(method %in% c(m, paste0(m, "2")), rho == r)
       
-      # ggplot(rho_m_nmi_results) +
-      #   geom_boxplot(aes(x=method, y=metric)) +
-      #   theme_bw()
-      
       rho_m_nmi_results_wide <- rho_m_nmi_results %>%
         spread(key = method, value = metric)
       
@@ -73,8 +63,6 @@ analyze_results <- function(n1, n2, n3, sk, alpha, opt, allNMI, N) {
         error = function(e) {
           return(NA)
         })
-      
-      # wilcox_result_p <- wilcox_result$p.value
       
       default_better_tbl <- default_better_tbl %>%
         rbind(tibble(
@@ -163,10 +151,3 @@ analyze_results <- function(n1, n2, n3, sk, alpha, opt, allNMI, N) {
 res <- analyze_results(n1 = 100, n2 = 1000, n3 = 5, sk = 3, alpha = 3, allNMI = TRUE, N = 100, opt = FALSE)
 
 res[[1]]
-
-# ggsave("plots/synthetic_networks_sk3.eps", device = cairo_ps, fallback_resolution = 600)
-
-# ggplot(res[[6]]) +
-#   geom_point(aes(y=default_worse_p < 0.05, x=rho)) +
-#   facet_wrap(.~method, nrow = 4) +
-#   theme_bw()
