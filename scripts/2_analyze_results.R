@@ -3,7 +3,7 @@ library(stringr)
 
 set.seed(108)
 
-analyze_results <- function(n1, n2, n3, sk, alpha, opt, allNMI, N, metric_to_use) {
+analyze_results <- function(n1, n2, n3, sk, alpha, opt, allNMI, N) {
   
   # alpha <- readline(prompt="Enter alpha: ")
   # NMItype <- tolower(readline(prompt="Enter NMI type (max/min/sqrt/sum/joint): "))
@@ -32,9 +32,25 @@ analyze_results <- function(n1, n2, n3, sk, alpha, opt, allNMI, N, metric_to_use
   # which NMI score to use?
   # metric_to_use <- "NMI_scores" # default
   
+  message("The following metrics are available for this set of parameters:")
+  
+  available_metrics <- names(nmi_results)[-c(1,2,3)]
+  
+  i <- 1
+  for(a_m in available_metrics) {
+    message(paste0(i, ": ", a_m))
+    i <- i+1
+  }
+  
+  metric_index <- readline(prompt="Enter the number corresponding to the metric you wish to use : ")
+  metric_to_use <- available_metrics[as.numeric(metric_index)]
+
+  
+  message(paste0("Using ", metric_to_use))
+  
   nmi_results <- nmi_results %>%
     select(run, rho, method, metric_to_use) %>%
-    rename("NMI_scores" = 4)
+    rename("metric" = 4)
   
   default_better_tbl <- NULL
   for(r in unique(nmi_results$rho)) {
@@ -44,11 +60,11 @@ analyze_results <- function(n1, n2, n3, sk, alpha, opt, allNMI, N, metric_to_use
         dplyr::filter(method %in% c(m, paste0(m, "2")), rho == r)
       
       # ggplot(rho_m_nmi_results) +
-      #   geom_boxplot(aes(x=method, y=NMI_scores)) +
+      #   geom_boxplot(aes(x=method, y=metric)) +
       #   theme_bw()
       
       rho_m_nmi_results_wide <- rho_m_nmi_results %>%
-        spread(key = method, value = NMI_scores)
+        spread(key = method, value = metric)
       
       wilcox_result_p <- tryCatch(
         wilcox.test(rho_m_nmi_results_wide[[m]],
@@ -71,8 +87,8 @@ analyze_results <- function(n1, n2, n3, sk, alpha, opt, allNMI, N, metric_to_use
   
   nmi_mean_sd <- nmi_results %>%
     group_by(method, rho) %>%
-    summarize(meanNMI = mean(NMI_scores),
-              sdNMI = sd(NMI_scores)) %>%
+    summarize(meanNMI = mean(metric),
+              sdNMI = sd(metric)) %>%
     ungroup() %>%
     mutate(lower_bound = meanNMI - sdNMI,
            upper_bound = meanNMI + sdNMI) %>%
@@ -91,8 +107,6 @@ analyze_results <- function(n1, n2, n3, sk, alpha, opt, allNMI, N, metric_to_use
                      "Leading Eigenvector", "Label Propagation","Spin-Glass", "WalkTrap")
   
   names(method_labels) <- method
-  
-  print(nmi_mean_sd)
   
   nmi_ribbonplot <- ggplot(nmi_mean_sd,
                            aes(x = rho,
@@ -133,7 +147,7 @@ analyze_results <- function(n1, n2, n3, sk, alpha, opt, allNMI, N, metric_to_use
   
   nmi_boxplot <- ggplot(nmi_results) +
     geom_boxplot(aes(x = as_factor(rho),
-                     y = NMI_scores)) +
+                     y = metric)) +
     geom_hline(aes(yintercept = 0.5),
                color = "#FF0000")+
     facet_wrap(.~method,
@@ -146,7 +160,7 @@ analyze_results <- function(n1, n2, n3, sk, alpha, opt, allNMI, N, metric_to_use
   return(list(nmi_ribbonplot, nmi_boxplot, default_better_tbl))
 }
 
-res <- analyze_results(n1 = 100, n2 = 1000, n3 = 5, sk = 3, alpha = 3, allNMI = TRUE, N = 100, opt = FALSE, metric_to_use = "SNMI_scores")
+res <- analyze_results(n1 = 100, n2 = 1000, n3 = 5, sk = 3, alpha = 3, allNMI = TRUE, N = 100, opt = FALSE)
 
 res[[1]]
 
