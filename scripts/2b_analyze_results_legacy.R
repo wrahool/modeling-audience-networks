@@ -15,7 +15,6 @@ analyze_results <- function(n1, n2, n3, sk, alpha, opt, allNMI, N) {
                               "alpha", alpha,
                               "sk", sk, 
                               "optimal", opt,
-                              "allNMI", allNMI, 
                               "N", N, sep = "_"))
   
   nmi_files <- list.files("results/")[nmi_file_indices]
@@ -31,7 +30,7 @@ analyze_results <- function(n1, n2, n3, sk, alpha, opt, allNMI, N) {
   
   # which NMI score to use?
   # metric_to_use <- "NMI_scores" # default
-  metric_to_use <- "AMI_scores"
+  metric_to_use <- "NMI_scores"
   
   nmi_results <- nmi_results %>%
     select(run, rho, method, metric_to_use) %>%
@@ -191,9 +190,11 @@ analyze_results <- function(n1, n2, n3, sk, alpha, opt, allNMI, N) {
   return(list(nmi_ribbonplot, nmi_boxplot, mxp_plot, overall_kendall, mean_kendall, median_kendall, default_better_tbl))
 }
 
-res <- analyze_results(n1 = 100, n2 = 1000, n3 = 5, sk = 3, alpha = 3, allNMI = TRUE, N = 100, opt = FALSE)
+res <- analyze_results(n1 = 100, n2 = 1000, n3 = 5, sk = 3, alpha = 2, allNMI = FALSE, N = 100, opt = FALSE)
 
 res[[1]]
+
+ggsave(res[[1]], filename = "plots/sk3_alpha2.eps", device=cairo_ps)
 
 # ggsave("plots/synthetic_networks_sk3.eps", device = cairo_ps, fallback_resolution = 600)
 

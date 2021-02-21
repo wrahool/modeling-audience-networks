@@ -29,6 +29,7 @@ analyze_results <- function(n1, n2, n3, sk, alpha, opt, allNMI, N) {
   message("The following metrics are available for this set of parameters:")
   
   available_metrics <- names(nmi_results)[-c(1,2,3)]
+  available_metrics <- available_metrics[available_metrics != "scaling_factors"]
   
   i <- 1
   for(a_m in available_metrics) {
@@ -39,12 +40,30 @@ analyze_results <- function(n1, n2, n3, sk, alpha, opt, allNMI, N) {
   metric_index <- readline(prompt="Enter the number corresponding to the metric you wish to use : ")
   metric_to_use <- available_metrics[as.numeric(metric_index)]
 
+  use_scaling_factor <- readline(prompt = "Use scaling factor? 1 for Yes, 0 for No : ")
+  use_scaling_factor <- as.logical(as.numeric(use_scaling_factor))
   
   message(paste0("Using ", metric_to_use))
   
-  nmi_results <- nmi_results %>%
-    select(run, rho, method, metric_to_use) %>%
-    rename("metric" = 4)
+  if (use_scaling_factor) {
+    message("Using scaling factor ... ")
+    
+    nmi_results <- nmi_results %>%
+      select(run, rho, method, metric_to_use, scaling_factors) %>%
+      rename("metric" = 4) %>%
+      mutate(metric = ifelse(is.nan(metric), 0, metric)) %>%
+      mutate(metric = metric * scaling_factors) %>%
+      select(-scaling_factors)
+  }
+  else {
+    message("Not using scaling factor ...")
+    
+    nmi_results <- nmi_results %>%
+      select(run, rho, method, metric_to_use) %>%
+      rename("metric" = 4) %>%
+      mutate(metric = ifelse(is.nan(metric), NA, metric))
+    
+  } 
   
   default_better_tbl <- NULL
   for(r in unique(nmi_results$rho)) {
@@ -148,6 +167,8 @@ analyze_results <- function(n1, n2, n3, sk, alpha, opt, allNMI, N) {
   return(list(nmi_ribbonplot, nmi_boxplot, default_better_tbl))
 }
 
-res <- analyze_results(n1 = 100, n2 = 1000, n3 = 5, sk = 3, alpha = 3, allNMI = TRUE, N = 100, opt = FALSE)
+res <- analyze_results(n1 = 100, n2 = 1000, n3 = 5, sk = 3, alpha = 3, allNMI = TRUE, N = 5, opt = FALSE)
 
 res[[1]]
+
+# ggsave(res[[1]], filename = "plots/SNMI.eps", device=cairo_ps)

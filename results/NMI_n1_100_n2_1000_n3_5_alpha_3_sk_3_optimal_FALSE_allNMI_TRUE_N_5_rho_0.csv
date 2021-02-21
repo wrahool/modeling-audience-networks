@@ -1,4 +1,4 @@
-run,rho,method,NMI_scores_max,NMI_scores_min,NMI_scores_sqrt,NMI_scores_sum,NMI_scores_joint,AMI_scores,SNMI_scores
+run,rho,method,NMI_scores_max,NMI_scores_min,NMI_scores_sqrt,NMI_scores_sum,NMI_scores_joint,AMI_scores,scaling_factors
 5,0,wt,1,1,1,1,1,1,1
 5,0,wt2,1,1,1,1,1,1,1
 5,0,l,1,1,1,1,1,1,1
@@ -74,7 +74,7 @@ run,rho,method,NMI_scores_max,NMI_scores_min,NMI_scores_sqrt,NMI_scores_sum,NMI_
 1,0,im,1,1,1,1,1,1,1
 1,0,im2,1,1,1,1,1,1,1
 1,0,lp,1,1,1,1,1,1,1
-1,0,lp2,0.7414609305170268,1,0.8610812566285639,0.8515389780199003,0.7414609305170268,0.7414609305170268,0.02025947267095851
+1,0,lp2,0.7414609305170268,1,0.8610812566285639,0.8515389780199003,0.7414609305170268,0.7414609305170268,0.02732372244729256
 1,0,le,1,1,1,1,1,1,1
 1,0,le2,1,1,1,1,1,1,1
 1,0,sl,NA,NA,NA,NA,NA,NA,NA
