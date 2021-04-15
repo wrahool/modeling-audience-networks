@@ -57,16 +57,31 @@ load("network_data/empirical_network/results2.Rdata")
 media_types <- read_csv(filepaths$media_types)
 
 # function to calculate Normalized Mutual Information content of a community structure
-get_NMI <- function(m_t, c) {
+get_NMI <- function(m_t, com) {
   c_tbl <- tibble(
-    Media = c$names,
-    Community = c$membership
+    Media = com$names,
+    Community = com$membership
   )
   
   confusion_tbl <- m_t %>%
     merge(c_tbl)
   
-  NMI(confusion_tbl$State, confusion_tbl$Community)
+  R <- confusion_tbl %>%
+    pull(State) %>%
+    unique() %>%
+    length()
+  
+  S <- confusion_tbl %>%
+    pull(Community) %>%
+    unique() %>%
+    length()
+  
+  scaling_factor <- exp(-abs(R-S)/R)
+  
+  return(list(
+    NMI(confusion_tbl$State, confusion_tbl$Community),
+    scaling_factor)
+  )
 }
 
 media_types <- media_types %>%
@@ -109,7 +124,10 @@ for(algo in algos) {
       rbind(tibble(
         algorithm = algo,
         algorithm_type = a_type,
-        NMI_value = get_NMI(media_types, get(paste0(algo, a_type)))))
+        NMI_value = get_NMI(media_types, get(paste0(algo, a_type)))[[1]],
+        scaling_factor = get_NMI(media_types, get(paste0(algo, a_type)))[[2]]
+        )
+      )
   }
 }
 
@@ -117,7 +135,8 @@ algo_NMI <- algo_NMI %>%
   rename(algo = algorithm,
          type = algorithm_type) %>%
   mutate(algo = as_factor(algo),
-         type = as_factor(type))
+         type = as_factor(type)) %>%
+  mutate(SNMI_value = NMI_value * scaling_factor)
 
 # algos_labels <- c("WalkTrap", "Multilevel", "Fast Greedy", "Edge Betweeneness",
 #                   "Infomap", "Label Propagation", "Leading Eigenvector", "Spinglass")
@@ -131,7 +150,7 @@ algo_NMI <- algo_NMI %>%
   mutate(type = ifelse(type == 1, "Baseline", "Augmented")) %>%
   mutate(type = factor(type, levels = c("Baseline", "Augmented")))
 
-e_plot <- ggplot(data = algo_NMI,
+e_plot_nmi <- ggplot(data = algo_NMI,
        aes(x = type,
            y = NMI_value,
            group = 1)) +
@@ -159,5 +178,42 @@ e_plot <- ggplot(data = algo_NMI,
     panel.grid.major.x = element_blank(),
     panel.grid.minor.x = element_blank(),
     legend.position = "none",
-    text = element_text(size=8)
+    axis.text = element_text(size=11),
+    axis.title=element_text(size=14,face="bold")
+  )
+
+ggsave(e_plot_nmi, filename = "plots/empirical_network_NMI.eps", device=cairo_ps)
+
+e_plot_snmi <- ggplot(data = algo_NMI,
+                     aes(x = type,
+                         y = SNMI_value,
+                         group = 1)) +
+  geom_line(size = 1, linetype = "solid") +
+  geom_point(size = 3, aes(color = as_factor(type))) +
+  geom_hline(yintercept = 0.5,
+             linetype = "dashed",
+             color = "red") +
+  ylab("SNMI") +
+  xlab("Network type") +
+  facet_wrap(~algo,
+             nrow = 2,
+             labeller = labeller(algo = algos_labels)) +
+  ylim(c(0,1)) +
+  theme_bw() +
+  theme(
+    strip.background = element_rect(
+      color="black", fill="black", size=1.5, linetype="solid"
+    ),
+    strip.text.x = element_text(
+      size = 10, color = "white"
+    ),
+    # panel.grid.major.x = element_line(colour="gray90",size = rel(0.5))
+    # scale_x_continuous(breaks = seq(from=1, to=2, by = 0.5)),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    legend.position = "none",
+    axis.text = element_text(size=11),
+    axis.title=element_text(size=14,face="bold")
   ) 
+
+ggsave(e_plot_snmi, filename = "plots/empirical_network_SNMI.eps", device=cairo_ps)
